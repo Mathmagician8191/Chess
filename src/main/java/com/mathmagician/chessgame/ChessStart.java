@@ -27,7 +27,8 @@ public class ChessStart {
         JPanel pane = new JPanel(new GridBagLayout());
         
         //set up fen input
-        JTextField fen = new JTextField("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        JTextField fen = new JTextField(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         GridBagConstraints constraintsFen =
             new GridBagConstraints(0,0,5,1,1,0,GridBagConstraints.PAGE_START,
             GridBagConstraints.HORIZONTAL,new Insets(15,15,15,15),0,0);
