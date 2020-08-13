@@ -1,4 +1,4 @@
-package chess;
+package com.mathmagician.chessgame;
 
 class Piece {
   boolean isPiece;
