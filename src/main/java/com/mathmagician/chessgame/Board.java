@@ -187,6 +187,7 @@ class Board {
       //knight
       case 'n':
         result = (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2);
+        break;
       case 'p':
         //move forward
         if (startSquare[1]==endSquare[1]) {

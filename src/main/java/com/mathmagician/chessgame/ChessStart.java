@@ -116,7 +116,13 @@ public class ChessStart {
             for (int j=0;j<columnCount;j++) {
                 Piece piece = boardState[i][j];
                 Character letter = piece.side? Character.toUpperCase(piece.letter) : piece.letter;
-                board.add(new JLabel(String.valueOf(letter)));
+                JLabel square = new JLabel(String.valueOf(letter));
+                switch (piece.letter) {
+                    case 'p':
+                        square.setIcon(new ImageIcon("Pawn.png"));
+                        break;
+                }
+                board.add(square);
             }
         }
         
