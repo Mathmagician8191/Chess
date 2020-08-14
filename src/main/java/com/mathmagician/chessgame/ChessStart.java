@@ -16,18 +16,30 @@ import javax.swing.*;
 import java.text.*;
 
 public class ChessStart {
+    private static JFrame window;
+    private static JPanel cards;
+    private static JPanel board;
+    
+    private static JTextField fen;
+    private static JFormattedTextField rows;
+    private static JFormattedTextField columns;
+    
+    private static Board gameState;
+    
     public static void main(String[] args) {
         makeGui();
     }
     public static void makeGui() {
-        JFrame window = new JFrame("Choose game FEN");
+        window = new JFrame("Choose game FEN");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        cards = new JPanel(new CardLayout());
         
         //set up GridBagLayout
         JPanel pane = new JPanel(new GridBagLayout());
         
         //set up fen input
-        JTextField fen = new JTextField(
+        fen = new JTextField(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         GridBagConstraints constraintsFen =
             new GridBagConstraints(0,0,5,1,1,0,GridBagConstraints.PAGE_START,
@@ -36,7 +48,7 @@ public class ChessStart {
         
         //row/column input
         NumberFormat validNumber = NumberFormat.getNumberInstance();
-        JFormattedTextField rows = new JFormattedTextField(validNumber);
+        rows = new JFormattedTextField(validNumber);
         rows.setColumns(2);
         rows.setValue(8);
         GridBagConstraints constraintsRows =
@@ -44,7 +56,7 @@ public class ChessStart {
             GridBagConstraints.NONE,new Insets(0,0,10,10),0,0);
         pane.add(rows, constraintsRows);
         
-        JFormattedTextField columns = new JFormattedTextField(validNumber);
+        columns = new JFormattedTextField(validNumber);
         columns.setColumns(2);
         columns.setValue(8);
         GridBagConstraints constraintsColumns =
@@ -67,15 +79,40 @@ public class ChessStart {
         
         //button to submit
         JButton submitButton = new JButton("Start Game");
+        submitButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                startGame();
+            }
+        });
         GridBagConstraints constraintsButton =
-            new GridBagConstraints(4,1,1,1,0,0,GridBagConstraints.FIRST_LINE_START,
+            new GridBagConstraints(4,1,1,1,0,1,GridBagConstraints.FIRST_LINE_START,
             GridBagConstraints.NONE,new Insets(0,10,10,10),0,0);
         pane.add(submitButton, constraintsButton);
         
+        //add cards to CardLayout
+        cards.add(pane);
+        
         //Display
-        window.add(pane);
+        window.add(cards);
         window.pack();
         window.setVisible(true);
     }
     
+    public static void startGame() {
+        //get game info
+        String gameFen = fen.getText();
+        int rowCount = Integer.parseInt(rows.getText());
+        int columnCount = Integer.parseInt(columns.getText());
+        
+        gameState = new Board(gameFen, rowCount, columnCount);
+        
+        //make new panel
+        board = new JPanel(new GridBagLayout());
+        //draw board
+        
+        //add panel to CardLayout
+        cards.add(board);
+        CardLayout cardLayout = (CardLayout) cards.getLayout();
+        cardLayout.next(cards);
+    }
 }

@@ -1,8 +1,6 @@
 package com.mathmagician.chessgame;
 
 import java.util.Arrays;
-import java.lang.Math;
-import com.mathmagician.chessgame.Piece;
 
 class Board {
   int width;
