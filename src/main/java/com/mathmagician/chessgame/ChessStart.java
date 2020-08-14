@@ -18,7 +18,7 @@ import java.text.*;
 public class ChessStart {
     private static JFrame window;
     private static JPanel cards;
-    private static JPanel board;
+    private static JPanel boardScreen;
     
     private static JTextField fen;
     private static JFormattedTextField rows;
@@ -80,6 +80,7 @@ public class ChessStart {
         //button to submit
         JButton submitButton = new JButton("Start Game");
         submitButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 startGame();
             }
@@ -107,8 +108,17 @@ public class ChessStart {
         gameState = new Board(gameFen, rowCount, columnCount);
         
         //make new panel
-        board = new JPanel(new GridBagLayout());
+        boardScreen = new JPanel(new GridBagLayout());
         //draw board
+        JPanel board = new JPanel(new GridLayout(rowCount,columnCount));
+        Piece[][] boardState = gameState.boardstate;
+        for (int i=rowCount-1;i>=0;i--) {
+            for (int j=0;j<columnCount;j++) {
+                Piece piece = boardState[i][j];
+                Character letter = piece.side? Character.toUpperCase(piece.letter) : piece.letter;
+                board.add(new JLabel(String.valueOf(letter)));
+            }
+        }
         
         //add panel to CardLayout
         cards.add(board);
