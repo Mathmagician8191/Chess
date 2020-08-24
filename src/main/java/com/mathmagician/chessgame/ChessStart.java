@@ -9,7 +9,7 @@ public class ChessStart {
     private static JFrame window;
     private static JPanel cards;
     
-    private static JTextField fen;
+    private static JComboBox fen;
     
     private static Board gameState;
     
@@ -30,9 +30,14 @@ public class ChessStart {
         pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
         pane.setBorder(border);
         
-        //set up fen input
-        fen = new JTextField(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        //set up fen input as editable combo box
+        String[] exampleFens = {
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1"
+        };
+        fen = new JComboBox(exampleFens);
+        fen.setEditable(true);
+        //make combo box only expand horizontally
         fen.setMaximumSize(
             new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
         pane.add(fen);
@@ -61,7 +66,7 @@ public class ChessStart {
     
     public static void startGame() {
         //get game info
-        String gameFen = fen.getText();
+        String gameFen = (String) fen.getSelectedItem();
         
         gameState = new Board(gameFen);
         

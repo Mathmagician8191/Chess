@@ -122,7 +122,6 @@ class Board {
       }
       if (emptySquares >  0) {
         result += Integer.toString(emptySquares);
-        emptySquares = 0;
       }
       result += "/";
       row--;
