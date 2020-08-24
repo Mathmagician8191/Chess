@@ -37,29 +37,42 @@ class Board {
     int column = 0;
     int index = 0;
     int row = height-1;
+    int squares = 0; //accumulator for number of squares in a row
     //populate board with pieces
     while (index < length) {
       char piece = subsections[0].charAt(index);
-      if (piece == '/') {
-        //slash indicates new line
-        row--;
-        column = 0;
+      if (Character.isDigit(piece)) {
+        squares = 10*squares;
+        squares += Character.getNumericValue(piece);
       }
-      else if (Character.isDigit(piece)) {
-        //case of number of empty squares
-        int squares = Character.getNumericValue(piece);
-        for (int i=0;i<squares;i++) {
-          this.boardstate[row][column] = new Piece();
+      else {
+        if (squares > 0) {
+          for(int i=0;i<squares;i++) {
+            this.boardstate[row][column] = new Piece();
+            column++;
+          }
+          squares = 0;
+        }
+        if (piece == '/') {
+          //slash indicates new line
+          row--;
+          column = 0;
+        }
+        else {
+          this.boardstate[row][column] = new Piece(piece);
           column++;
         }
       }
-      else {
-        //case of actual piece
-        this.boardstate[row][column] = new Piece(piece);
-        column++;
-      }
       index++;
     }
+    if (squares > 0) {
+      for(int i=0;i<squares;i++) {
+        this.boardstate[row][column] = new Piece();
+        column++;
+      }
+      squares = 0;
+    }
+    
     //side to move
     this.toMove = subsections[1].equals("w");
 
