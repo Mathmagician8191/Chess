@@ -1,28 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mathmagician.chessgame;
-
-/**
- *
- * @author Mathmagician8191
- */
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import java.text.*;
 
 public class ChessStart {
     private static JFrame window;
     private static JPanel cards;
-    private static JPanel boardScreen;
     
     private static JTextField fen;
-    private static JFormattedTextField rows;
-    private static JFormattedTextField columns;
     
     private static Board gameState;
     
@@ -77,8 +63,6 @@ public class ChessStart {
         int rowCount = gameState.height;
         int columnCount = gameState.width;
         
-        //make new panel
-        boardScreen = new JPanel(new GridBagLayout());
         //draw board
         JPanel board = new JPanel(new GridLayout(rowCount,columnCount));
         Piece[][] boardState = gameState.boardstate;
