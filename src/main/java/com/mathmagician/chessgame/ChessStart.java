@@ -74,8 +74,15 @@ public class ChessStart {
         for (int i=rowCount-1;i>=0;i--) {
             for (int j=0;j<columnCount;j++) {
                 Piece piece = boardState[i][j];
-                Character letter = piece.side? Character.toUpperCase(piece.letter) : piece.letter;
-                JLabel square = new JLabel(String.valueOf(letter));
+                //make a JLabel with the piece name
+                JButton square = new JButton(String.valueOf(piece.letter));
+                //set up a colour for the square
+                Color colour = (i+j)%2 == 1 ?
+                    new Color(255,255,255) : new Color(127,0,0);
+                //se opaque to make sure the background is visible
+                square.setOpaque(true);
+                //set the background
+                square.setBackground(colour);
                 switch (piece.letter) {
                     case 'p':
                         square.setIcon(new ImageIcon("Pawn.png"));
