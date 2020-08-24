@@ -24,6 +24,7 @@ class Board {
     String[] rows = subsections[0].split("/");
     height = rows.length;
     
+    //figure out the number of columns on the board
     int rowLetters = rows[0].length();
     width = 0;
     for (int i=0;i<rowLetters;i++) {
@@ -33,44 +34,37 @@ class Board {
     
     //set up a loop to decode the FEN board state
     this.boardstate = new Piece[height][width];
-    int length = subsections[0].length();
-    int column = 0;
-    int index = 0;
     int row = height-1;
-    int squares = 0; //accumulator for number of squares in a row
-    //populate board with pieces
-    while (index < length) {
-      char piece = subsections[0].charAt(index);
-      if (Character.isDigit(piece)) {
-        squares = 10*squares;
-        squares += Character.getNumericValue(piece);
-      }
-      else {
-        if (squares > 0) {
-          for(int i=0;i<squares;i++) {
-            this.boardstate[row][column] = new Piece();
-            column++;
-          }
-          squares = 0;
-        }
-        if (piece == '/') {
-          //slash indicates new line
-          row--;
-          column = 0;
+    //decode the FEN board state
+    for (int i=row;i>=0;i--) {
+      int column = 0;
+      int squares = 0;
+      String rowData = rows[i];
+      int length = rowData.length();
+      for (int j=0;j<length;j++) {
+        char piece = rowData.charAt(j);
+        if (Character.isDigit(piece)) {
+          squares *= 10;
+          squares += Character.getNumericValue(piece);
         }
         else {
-          this.boardstate[row][column] = new Piece(piece);
+          if (squares > 0) {
+            for (int k=0;k<squares;k++) {
+              this.boardstate[i][column] = new Piece();
+              column++;
+            }
+            squares = 0;
+          }
+          this.boardstate[i][column] = new Piece(piece);
           column++;
         }
       }
-      index++;
-    }
-    if (squares > 0) {
-      for(int i=0;i<squares;i++) {
-        this.boardstate[row][column] = new Piece();
-        column++;
+      if (squares > 0) {
+        for (int j=0;j<squares;j++) {
+          this.boardstate[i][column] = new Piece();
+          column++;
+        }
       }
-      squares = 0;
     }
     
     //side to move
