@@ -13,17 +13,30 @@ class Board {
   int moves;
   boolean gameOver;
   int gameResult; //0=white win, 1=draw, 2=black win
-  public Board(String fen, int width, int height) {
-    this.width = width;
-    this.height = height;
+  public Board(String fen) {
     this.gameOver = false;
-    this.boardstate = new Piece[height][width];
     //FEN processing
-    int row = height-1;
+    
+    //split the FEN into the different information it provides
+    String[] subsections = fen.split(" ");
+    
+    //figure out the number of rows on the board
+    String[] rows = subsections[0].split("/");
+    height = rows.length;
+    
+    int rowLetters = rows[0].length();
+    width = 0;
+    for (int i=0;i<rowLetters;i++) {
+        char piece = rows[0].charAt(i);
+        width += Character.isDigit(piece) ? Character.getNumericValue(piece) : 1;
+    }
+    
+    //set up a loop to decode the FEN board state
+    this.boardstate = new Piece[height][width];
+    int length = subsections[0].length();
     int column = 0;
     int index = 0;
-    String[] subsections = fen.split(" ");
-    int length = subsections[0].length();
+    int row = height-1;
     //populate board with pieces
     while (index < length) {
       char piece = subsections[0].charAt(index);

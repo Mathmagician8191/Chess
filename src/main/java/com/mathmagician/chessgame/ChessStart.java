@@ -46,37 +46,6 @@ public class ChessStart {
             GridBagConstraints.HORIZONTAL,new Insets(15,15,15,15),0,0);
         pane.add(fen, constraintsFen);
         
-        //row/column input
-        NumberFormat validNumber = NumberFormat.getNumberInstance();
-        rows = new JFormattedTextField(validNumber);
-        rows.setColumns(2);
-        rows.setValue(8);
-        GridBagConstraints constraintsRows =
-            new GridBagConstraints(1,1,1,1,0,0,GridBagConstraints.PAGE_START,
-            GridBagConstraints.NONE,new Insets(0,0,10,10),0,0);
-        pane.add(rows, constraintsRows);
-        
-        columns = new JFormattedTextField(validNumber);
-        columns.setColumns(2);
-        columns.setValue(8);
-        GridBagConstraints constraintsColumns =
-            new GridBagConstraints(3,1,1,1,0,0,GridBagConstraints.PAGE_START,
-            GridBagConstraints.NONE,new Insets(0,0,10,10),0,0);
-        pane.add(columns, constraintsColumns);
-        
-        //text fields
-        JLabel rowText = new JLabel("Rows:");
-        GridBagConstraints constraintsRowText =
-            new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.PAGE_START,
-            GridBagConstraints.NONE,new Insets(0,10,10,10),0,0);
-        pane.add(rowText,constraintsRowText);
-        
-        JLabel columnText = new JLabel("Columns:");
-        GridBagConstraints constraintsColumnText =
-            new GridBagConstraints(2,1,1,1,0,0,GridBagConstraints.PAGE_START,
-            GridBagConstraints.NONE,new Insets(0,10,10,10),0,0);
-        pane.add(columnText,constraintsColumnText);
-        
         //button to submit
         JButton submitButton = new JButton("Start Game");
         submitButton.addActionListener(new ActionListener() {
@@ -102,10 +71,11 @@ public class ChessStart {
     public static void startGame() {
         //get game info
         String gameFen = fen.getText();
-        int rowCount = Integer.parseInt(rows.getText());
-        int columnCount = Integer.parseInt(columns.getText());
         
-        gameState = new Board(gameFen, rowCount, columnCount);
+        gameState = new Board(gameFen);
+        
+        int rowCount = gameState.height;
+        int columnCount = gameState.width;
         
         //make new panel
         boardScreen = new JPanel(new GridBagLayout());
