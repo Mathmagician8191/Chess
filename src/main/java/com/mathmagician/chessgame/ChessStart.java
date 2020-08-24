@@ -3,6 +3,7 @@ package com.mathmagician.chessgame;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.border.*;
 
 public class ChessStart {
     private static JFrame window;
@@ -21,16 +22,23 @@ public class ChessStart {
         
         cards = new JPanel(new CardLayout());
         
+        //set up border for padding
+        Border border = BorderFactory.createEmptyBorder(20,20,20,20);
+        
         //set up GridBagLayout
-        JPanel pane = new JPanel(new GridBagLayout());
+        JPanel pane = new JPanel();
+        pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
+        pane.setBorder(border);
         
         //set up fen input
         fen = new JTextField(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        GridBagConstraints constraintsFen =
-            new GridBagConstraints(0,0,5,1,1,0,GridBagConstraints.PAGE_START,
-            GridBagConstraints.HORIZONTAL,new Insets(15,15,15,15),0,0);
-        pane.add(fen, constraintsFen);
+        fen.setMaximumSize(
+            new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
+        pane.add(fen);
+        
+        //add gap between text field and button
+        pane.add(Box.createRigidArea(new Dimension(0,20)));
         
         //button to submit
         JButton submitButton = new JButton("Start Game");
@@ -40,10 +48,7 @@ public class ChessStart {
                 startGame();
             }
         });
-        GridBagConstraints constraintsButton =
-            new GridBagConstraints(4,1,1,1,0,1,GridBagConstraints.FIRST_LINE_START,
-            GridBagConstraints.NONE,new Insets(0,10,10,10),0,0);
-        pane.add(submitButton, constraintsButton);
+        pane.add(submitButton);
         
         //add cards to CardLayout
         cards.add(pane);
@@ -84,5 +89,6 @@ public class ChessStart {
         cards.add(board);
         CardLayout cardLayout = (CardLayout) cards.getLayout();
         cardLayout.next(cards);
+        window.pack();
     }
 }
