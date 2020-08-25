@@ -174,7 +174,11 @@ public class ChessStart {
     cards.add(board);
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
-    window.pack();
+    
+    //resize window if not maximized
+    if (window.getExtendedState() == JFrame.NORMAL) {
+      window.pack();
+    }
   }
 
   public static ImageIcon createImageIcon(String location, int width, int height) {
