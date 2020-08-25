@@ -28,8 +28,8 @@ class Board {
     int rowLetters = rows[0].length();
     width = 0;
     for (int i=0;i<rowLetters;i++) {
-        char piece = rows[0].charAt(i);
-        width += Character.isDigit(piece) ? Character.getNumericValue(piece) : 1;
+      char piece = rows[0].charAt(i);
+      width += Character.isDigit(piece) ? Character.getNumericValue(piece) : 1;
     }
     
     //set up a loop to decode the FEN board state
@@ -178,9 +178,9 @@ class Board {
 
   //converts coordinates to algebraic
   public static String numberToAlgebraic(int[] number) {
-      String result = String.valueOf((char) (number[1]+97));
-      result += Integer.toString(number[0]+1);
-      return result;
+    String result = String.valueOf((char) (number[1]+97));
+    result += Integer.toString(number[0]+1);
+    return result;
   }
 
   //boolean returns whether the move is legal
