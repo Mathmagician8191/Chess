@@ -3,18 +3,31 @@ package com.mathmagician.chessgame;
 import java.util.Arrays;
 
 class Board {
+  //board size
   int width;
   int height;
+  
+  //array of pieces in the board
   Piece[][] boardstate;
+  
+  //other game info
   boolean toMove; //white to move=true
   boolean[] castleRights;
   int[] enPassant; //square for en passant capture
   int halfmoveClock; //half moves since last capture/pawn move
   int moves;
+  
+  //game state
   boolean gameOver;
   int gameResult; //0=white win, 1=draw, 2=black win
-  public Board(String fen) {
+  
+  //options for moving
+  int pawnRow;
+  
+  public Board(String fen, int pawnRow) {
     this.gameOver = false;
+    this.pawnRow = pawnRow;
+    
     //FEN processing
     
     //split the FEN into the different information it provides
@@ -219,7 +232,8 @@ class Board {
               break;
             case 2:
               //valid if pawn hasn't moved and 2 squares are empty
-              if (startSquare[0]>1) {
+              int squaresFromBack = piece.side ? startSquare[0]-1 : height-startSquare[0]-1;
+              if (squaresFromBack>pawnRow) {
                 //pawn has already moved, no double move
                 return false;
               }

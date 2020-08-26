@@ -4,13 +4,23 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import java.text.NumberFormat;
 
 public class ChessStart {
+  //JFrame and JPanels
   private static JFrame window;
   private static JPanel cards;
-
+  private static JPanel pane;
+  private static JPanel optionsMenu;
+  
+  //elements in gui
   private static JComboBox fen;
-
+  private static JButton submitButton;
+  
+  //options for the game
+  private static JSpinner pawnRow;
+  
+  //the state of the board
   private static Board gameState;
 
   public static void main(String[] args) {
@@ -25,8 +35,8 @@ public class ChessStart {
     //set up border for padding
     Border border = BorderFactory.createEmptyBorder(20,20,20,20);
 
-    //set up GridBagLayout
-    JPanel pane = new JPanel();
+    //set up BoxLayout
+    pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
     pane.setBorder(border);
 
@@ -46,7 +56,7 @@ public class ChessStart {
     pane.add(Box.createRigidArea(new Dimension(0,20)));
 
     //button to submit
-    JButton submitButton = new JButton("Start Game");
+    submitButton = new JButton("Start Game");
     submitButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -54,6 +64,20 @@ public class ChessStart {
       }
     });
     pane.add(submitButton);
+    
+    //add space between the button and the game options
+    pane.add(Box.createRigidArea(new Dimension(0,20)));
+    
+    //set up game options JPanel
+    optionsMenu = new JPanel();
+    optionsMenu.setLayout(new BoxLayout(optionsMenu,BoxLayout.Y_AXIS));
+    
+    //Add row the pawns can double-move from
+    SpinnerNumberModel positiveNumbers = new SpinnerNumberModel(2,0,Integer.MAX_VALUE,1);
+    pawnRow = new JSpinner(positiveNumbers);
+    optionsMenu.add(pawnRow);
+    
+    pane.add(optionsMenu);
 
     //add cards to CardLayout
     cards.add(pane);
@@ -67,8 +91,9 @@ public class ChessStart {
   public static void startGame() {
     //get game info
     String gameFen = (String) fen.getSelectedItem();
+    int pawnStartRow = (Integer) pawnRow.getValue();
 
-    gameState = new Board(gameFen);
+    gameState = new Board(gameFen, pawnStartRow);
 
     int rowCount = gameState.height;
     int columnCount = gameState.width;
