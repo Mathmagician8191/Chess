@@ -4,14 +4,12 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
-import java.text.NumberFormat;
 
 public class ChessStart {
   //JFrame and JPanels
   private static JFrame window;
   private static JPanel cards;
   private static JPanel pane;
-  private static JPanel optionsMenu;
   
   //elements in gui
   private static JComboBox fen;
@@ -19,6 +17,7 @@ public class ChessStart {
   
   //options for the game
   private static JSpinner pawnRow;
+  private static JSpinner pawnSquares;
   
   //the state of the board
   private static Board gameState;
@@ -46,6 +45,7 @@ public class ChessStart {
         "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1"
     };
     fen = new JComboBox(exampleFens);
+    fen.setAlignmentX(Component.LEFT_ALIGNMENT);
     fen.setEditable(true);
     //make combo box only expand horizontally
     fen.setMaximumSize(
@@ -57,6 +57,7 @@ public class ChessStart {
 
     //button to submit
     submitButton = new JButton("Start Game");
+    submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
     submitButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -68,17 +69,12 @@ public class ChessStart {
     //add space between the button and the game options
     pane.add(Box.createRigidArea(new Dimension(0,20)));
     
-    //set up game options JPanel
-    optionsMenu = new JPanel();
-    optionsMenu.setLayout(new BoxLayout(optionsMenu,BoxLayout.Y_AXIS));
+    //add label for max n-move row
+    pawnRow = ChessStart.createRow("Max row pawns can n-move from:",2,0,2);
     
-    //Add row the pawns can double-move from
-    SpinnerNumberModel positiveNumbers = new SpinnerNumberModel(2,0,Integer.MAX_VALUE,1);
-    pawnRow = new JSpinner(positiveNumbers);
-    optionsMenu.add(pawnRow);
+    //add max number of squares a pawn can move
+    pawnSquares = ChessStart.createRow("Max squares pawns can move first move:",2,1,2);
     
-    pane.add(optionsMenu);
-
     //add cards to CardLayout
     cards.add(pane);
 
@@ -92,8 +88,9 @@ public class ChessStart {
     //get game info
     String gameFen = (String) fen.getSelectedItem();
     int pawnStartRow = (Integer) pawnRow.getValue();
+    int pawnSquaresMovable = (Integer) pawnSquares.getValue();
 
-    gameState = new Board(gameFen, pawnStartRow);
+    gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable);
 
     int rowCount = gameState.height;
     int columnCount = gameState.width;
@@ -217,5 +214,28 @@ public class ChessStart {
       System.err.println("Can't find: " + location);
       return null;
     }
+  }
+  
+  public static JSpinner createRow(String text,int defaultValue,int minimumValue,int columns) {
+    JPanel row = new JPanel();
+    row.setLayout(new BoxLayout(row,BoxLayout.X_AXIS));
+    row.setAlignmentX(Component.LEFT_ALIGNMENT);
+    
+    JLabel label = new JLabel(text);
+    row.add(label);
+    
+    SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,minimumValue,Integer.MAX_VALUE,1);
+    
+    JSpinner spinner = new JSpinner(validNumbers);
+    JFormattedTextField spinnerText = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
+    spinnerText.setColumns(columns);
+    
+    spinner.setMaximumSize(spinner.getPreferredSize());
+    
+    row.add(spinner);
+    
+    ChessStart.pane.add(row);
+    
+    return new JSpinner();
   }
 }

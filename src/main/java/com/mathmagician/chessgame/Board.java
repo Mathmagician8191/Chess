@@ -22,11 +22,13 @@ class Board {
   int gameResult; //0=white win, 1=draw, 2=black win
   
   //options for moving
-  int pawnRow;
+  int pawnRow; //max row the pawns can n-move from
+  int pawnSquares; //number of squares the pawns can move on their first move
   
-  public Board(String fen, int pawnRow) {
+  public Board(String fen, int pawnRow, int pawnSquares) {
     this.gameOver = false;
     this.pawnRow = pawnRow;
+    this.pawnSquares = pawnSquares;
     
     //FEN processing
     
@@ -183,6 +185,7 @@ class Board {
 
   //converts algebraic notation into lookup coordinates
   public static int[] algebraicToNumber(String algebraic) {
+    //TODO: make work with multi-digit numbers
     int[] result = new int[2];
     result[1] = ((int) algebraic.charAt(0))-97; //find index of letter in the alphabet
     result[0] = Character.getNumericValue(algebraic.charAt(1))-1; //-1 to shift from 1-indexed to 0-indexed
@@ -191,6 +194,7 @@ class Board {
 
   //converts coordinates to algebraic
   public static String numberToAlgebraic(int[] number) {
+    //TODO: make work for values more than 25 (then update decode function to match)
     String result = String.valueOf((char) (number[1]+97));
     result += Integer.toString(number[0]+1);
     return result;
