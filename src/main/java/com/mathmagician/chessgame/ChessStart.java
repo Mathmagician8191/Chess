@@ -4,8 +4,13 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import java.util.Arrays;
 
 public class ChessStart {
+  /*
+  Makes a chess game gui and gives options to play the game
+  */
+  
   //JFrame and JPanels
   private static JFrame window;
   private static JPanel cards;
@@ -21,6 +26,9 @@ public class ChessStart {
   
   //the state of the board
   private static Board gameState;
+  
+  //selected square
+  private static int[] selectedSquare;
 
   public static void main(String[] args) {
       makeGui();
@@ -91,111 +99,8 @@ public class ChessStart {
     int pawnSquaresMovable = (Integer) pawnSquares.getValue();
 
     gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable);
-
-    int rowCount = gameState.height;
-    int columnCount = gameState.width;
-
-    //get ImageIcons set up
-    int width = 72;
-    int height = 72;
-    ImageIcon blackPawn = createImageIcon("/images/BlackPawn.png", width, height);
-    ImageIcon blackKnight = createImageIcon("/images/BlackKnight.png", width, height);
-    ImageIcon blackBishop = createImageIcon("/images/BlackBishop.png", width, height);
-    ImageIcon blackRook = createImageIcon("/images/BlackRook.png", width, height);
-    ImageIcon blackQueen = createImageIcon("/images/BlackQueen.png", width, height);
-    ImageIcon blackKing = createImageIcon("/images/BlackKing.png", width, height);
-    ImageIcon whitePawn = createImageIcon("/images/WhitePawn.png", width, height);
-    ImageIcon whiteKnight = createImageIcon("/images/WhiteKnight.png", width, height);
-    ImageIcon whiteBishop = createImageIcon("/images/WhiteBishop.png", width, height);
-    ImageIcon whiteRook = createImageIcon("/images/WhiteRook.png", width, height);
-    ImageIcon whiteQueen = createImageIcon("/images/WhiteQueen.png", width, height);
-    ImageIcon whiteKing = createImageIcon("/images/WhiteKing.png", width, height);
-
-    //draw board
-    JPanel board = new JPanel(new GridLayout(rowCount,columnCount));
-    Piece[][] boardState = gameState.boardstate;
-    for (int i=rowCount-1;i>=0;i--) {
-      for (int j=0;j<columnCount;j++) {
-        //find the piece being represented
-        Piece piece = boardState[i][j];
-
-        //switch the case back to how it would be output in a FEN
-        Character letter = piece.side? Character.toUpperCase(piece.letter) : piece.letter;
-
-        //make a JLabel with the piece name
-        JLabel square = new JLabel(String.valueOf(letter));
-
-        //name the button 
-        square.setName(Integer.toString(i)+Integer.toString(j));
-
-        //set up a colour for the square
-        Color colour = (i+j)%2 == 1 ?
-            new Color(255,255,255) : new Color(127,0,0);
-
-        //set opaque to make sure the background is visible
-        square.setOpaque(true);
-
-        //set the background
-        square.setBackground(colour);
-
-        switch (letter) {
-          case 'P':
-            square.setIcon(blackPawn);
-            square.setText("");
-            break;
-          case 'N':
-            square.setIcon(blackKnight);
-            square.setText("");
-            break;
-          case 'B':
-            square.setIcon(blackBishop);
-            square.setText("");
-            break;
-          case 'R':
-            square.setIcon(blackRook);
-            square.setText("");
-            break;
-          case 'Q':
-            square.setIcon(blackQueen);
-            square.setText("");
-            break;
-          case 'K':
-            square.setIcon(blackKing);
-            square.setText("");
-            break;
-          case 'p':
-            square.setIcon(whitePawn);
-            square.setText("");
-            break;
-          case 'n':
-            square.setIcon(whiteKnight);
-            square.setText("");
-            break;
-          case 'b':
-            square.setIcon(whiteBishop);
-            square.setText("");
-            break;
-          case 'r':
-            square.setIcon(whiteRook);
-            square.setText("");
-            break;
-          case 'q':
-            square.setIcon(whiteQueen);
-            square.setText("");
-            break;
-          case 'k':
-            square.setIcon(whiteKing);
-            square.setText("");
-            break;
-        }
-        board.add(square);
-      }
-    }
-
-    //add panel to CardLayout
-    cards.add(board);
-    CardLayout cardLayout = (CardLayout) cards.getLayout();
-    cardLayout.next(cards);
+    
+    ChessStart.renderBoard();
     
     //resize window if not maximized
     if (window.getExtendedState() == JFrame.NORMAL) {
@@ -237,5 +142,147 @@ public class ChessStart {
     ChessStart.pane.add(row);
     
     return new JSpinner();
+  }
+  
+  public static void move(int[] square) {
+    System.out.println(square[0]);
+    System.out.println(square[1]);
+    if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
+      Piece[][] boardState = gameState.boardstate;
+      Piece selectedPiece = boardState[square[0]][square[1]];
+      System.out.println(selectedPiece.letter);
+      selectedSquare = square;
+    }
+    else if (gameState.isMoveValid(selectedSquare, square)) {
+      System.out.println("Valid Move");
+      gameState.movePiece(selectedSquare, square);
+      ChessStart.renderBoard();
+      cards.remove(1);
+    }
+    else {
+      selectedSquare = new int[] {-1,-1};
+    }
+    
+  }
+  
+  public static void renderBoard() {
+    int rowCount = gameState.height;
+    int columnCount = gameState.width;
+
+    //get ImageIcons set up
+    int width = 72;
+    int height = 72;
+    ImageIcon blackPawn = createImageIcon("/images/BlackPawn.png", width, height);
+    ImageIcon blackKnight = createImageIcon("/images/BlackKnight.png", width, height);
+    ImageIcon blackBishop = createImageIcon("/images/BlackBishop.png", width, height);
+    ImageIcon blackRook = createImageIcon("/images/BlackRook.png", width, height);
+    ImageIcon blackQueen = createImageIcon("/images/BlackQueen.png", width, height);
+    ImageIcon blackKing = createImageIcon("/images/BlackKing.png", width, height);
+    ImageIcon whitePawn = createImageIcon("/images/WhitePawn.png", width, height);
+    ImageIcon whiteKnight = createImageIcon("/images/WhiteKnight.png", width, height);
+    ImageIcon whiteBishop = createImageIcon("/images/WhiteBishop.png", width, height);
+    ImageIcon whiteRook = createImageIcon("/images/WhiteRook.png", width, height);
+    ImageIcon whiteQueen = createImageIcon("/images/WhiteQueen.png", width, height);
+    ImageIcon whiteKing = createImageIcon("/images/WhiteKing.png", width, height);
+
+    //draw board
+    JPanel board = new JPanel(new GridLayout(rowCount,columnCount));
+    Piece[][] boardState = gameState.boardstate;
+    for (int i=rowCount-1;i>=0;i--) {
+      for (int j=0;j<columnCount;j++) {
+        //find the piece being represented
+        Piece piece = boardState[j][i];
+
+        //switch the case back to how it would be output in a FEN
+        Character letter = piece.side == 1 ? Character.toUpperCase(piece.letter) : piece.letter;
+
+        //make a JLabel with the piece name
+        JButton square = new JButton(String.valueOf(letter));
+        
+        //add an action listener for when the button is clicked
+        square.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            ChessStart.move(new int[] {j,i});
+          }
+        });
+
+        //set up a colour for the square
+        Color colour = (i+j)%2 == 1 ?
+            new Color(255,255,255) : new Color(127,0,0);
+        
+        //make the button look like a label
+        square.setFocusPainted(false);
+        square.setMargin(new Insets(0,0,0,0));
+        square.setBorderPainted(false);
+        
+        //set opaque to make sure the background is visible
+        square.setOpaque(true);
+
+        //set the background
+        square.setBackground(colour);
+        
+        //initialise selected square
+        selectedSquare = new int[] {-1,-1};
+        
+        //set the icon of the square
+        switch (letter) {
+          case 'p':
+            square.setIcon(blackPawn);
+            square.setText("");
+            break;
+          case 'n':
+            square.setIcon(blackKnight);
+            square.setText("");
+            break;
+          case 'b':
+            square.setIcon(blackBishop);
+            square.setText("");
+            break;
+          case 'r':
+            square.setIcon(blackRook);
+            square.setText("");
+            break;
+          case 'q':
+            square.setIcon(blackQueen);
+            square.setText("");
+            break;
+          case 'k':
+            square.setIcon(blackKing);
+            square.setText("");
+            break;
+          case 'P':
+            square.setIcon(whitePawn);
+            square.setText("");
+            break;
+          case 'N':
+            square.setIcon(whiteKnight);
+            square.setText("");
+            break;
+          case 'B':
+            square.setIcon(whiteBishop);
+            square.setText("");
+            break;
+          case 'R':
+            square.setIcon(whiteRook);
+            square.setText("");
+            break;
+          case 'Q':
+            square.setIcon(whiteQueen);
+            square.setText("");
+            break;
+          case 'K':
+            square.setIcon(whiteKing);
+            square.setText("");
+            break;
+        }
+        board.add(square);
+      }
+    }
+    
+    //add panel to CardLayout
+    cards.add(board);
+    CardLayout cardLayout = (CardLayout) cards.getLayout();
+    cardLayout.next(cards);
   }
 }

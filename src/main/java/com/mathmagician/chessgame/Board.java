@@ -3,6 +3,12 @@ package com.mathmagician.chessgame;
 import java.util.Arrays;
 
 class Board {
+  /*
+  Implements logic for a chess game, with an internal representation of the
+  board and move validation. It also features the ability to convert to and from
+  the common board representation FEN.
+  */
+  
   //board size
   int width;
   int height;
@@ -44,17 +50,18 @@ class Board {
     width = 0;
     for (int i=0;i<rowLetters;i++) {
       char piece = rows[0].charAt(i);
+      //incorrect for multi-digit square counts
       width += Character.isDigit(piece) ? Character.getNumericValue(piece) : 1;
     }
     
     //set up a loop to decode the FEN board state
-    this.boardstate = new Piece[height][width];
+    this.boardstate = new Piece[width][height];
     int row = height-1;
     //decode the FEN board state
     for (int i=row;i>=0;i--) {
       int column = 0;
       int squares = 0;
-      String rowData = rows[i];
+      String rowData = rows[height-i-1];
       int length = rowData.length();
       for (int j=0;j<length;j++) {
         char piece = rowData.charAt(j);
@@ -65,18 +72,18 @@ class Board {
         else {
           if (squares > 0) {
             for (int k=0;k<squares;k++) {
-              this.boardstate[i][column] = new Piece();
+              this.boardstate[column][i] = new Piece();
               column++;
             }
             squares = 0;
           }
-          this.boardstate[i][column] = new Piece(piece);
+          this.boardstate[column][i] = new Piece(piece);
           column++;
         }
       }
       if (squares > 0) {
         for (int j=0;j<squares;j++) {
-          this.boardstate[i][column] = new Piece();
+          this.boardstate[column][i] = new Piece();
           column++;
         }
       }
@@ -129,13 +136,13 @@ class Board {
     while (row>=0) {
       int emptySquares = 0;
       while (column < width) {
-        Piece piece = this.boardstate[row][column];
+        Piece piece = this.boardstate[column][row];
         if (piece.isPiece) {
           if (emptySquares >  0) {
             result += Integer.toString(emptySquares);
             emptySquares = 0;
           }
-          result += piece.side ? Character.toUpperCase(piece.letter) : piece.letter;
+          result += piece.side == 1 ? Character.toUpperCase(piece.letter) : piece.letter;
         }
         else {
           emptySquares++;
@@ -204,47 +211,58 @@ class Board {
   public boolean isMoveValid(int[] startSquare, int[] endSquare) {
     Piece piece = this.boardstate[startSquare[0]][startSquare[1]];
     Piece capture = this.boardstate[endSquare[0]][endSquare[1]];
-    boolean result = false;
 
     //test to make sure you're moving your own piece
-    if (piece.side == !toMove) {
+    if (piece.side != (toMove ? 1 : -1)) {
+      System.out.println("moving enemy piece");
       return false;
     }
 
     //test if trying to capture own piece
     if (capture.side == piece.side) {
+      System.out.println("capturing own piece");
       return false;
     }
-
+    
+    boolean result = this.validSquare(startSquare, endSquare, piece, capture);
+    
+    if (result) {
+      //test for check
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  
+  public boolean validSquare(int[] startSquare, int[] endSquare, Piece piece, Piece capture) {
     //rows and columns moved
     int rowDiff = Math.abs(startSquare[0]-endSquare[0]);
     int columnDiff = Math.abs(startSquare[1]-endSquare[1]);
     switch (piece.letter) {
       //knight
       case 'n':
-        result = (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2);
-        break;
+        return (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2);
       case 'p':
-        //move forward
-        if (startSquare[1]==endSquare[1]) {
+        //move forward test (columns are the same)
+        if (startSquare[0]==endSquare[0]) {
           //squares moved forwards
-          int squaresMoved = this.toMove ? endSquare[0]-startSquare[0] : startSquare[0]-endSquare[0];
+          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
+          System.out.println(squaresMoved);
           switch (squaresMoved) {
             case 1:
               //moving 1 square forwards is valid if the square is empty
-              result =  !capture.isPiece;
-              break;
+              return  !capture.isPiece;
             case 2:
               //valid if pawn hasn't moved and 2 squares are empty
-              int squaresFromBack = piece.side ? startSquare[0]-1 : height-startSquare[0]-1;
+              int squaresFromBack = piece.side == 1 ? startSquare[1]+1 : height-startSquare[1];
               if (squaresFromBack>pawnRow) {
                 //pawn has already moved, no double move
                 return false;
               }
               else {
                 //check if the 2 squares in front of the pawn are empty
-                result = !(capture.isPiece || this.boardstate[endSquare[0]-1][endSquare[1]].isPiece);
-                break;
+                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-1].isPiece;
               }
             default:
               return false;
@@ -261,34 +279,27 @@ class Board {
           //move is valid if it goes 1 square forward
           if (squaresMoved == 1) {
             //if moving 1 column away, move is valid
-            result = Math.abs(startSquare[1]-endSquare[1])==1;
-            break;
+            return Math.abs(startSquare[1]-endSquare[1])==1;
           }
           else {
             return false;
           }
         }
       case 'k':
-        if (rowDiff <= 1 && columnDiff <= 1) {
-          result = true;
-          break;
-        }
-        else {
-          return false;
-        }
+        return rowDiff <= 1 && columnDiff <= 1;
+      case 'h':
+        return (rowDiff==columnDiff && rowDiff<=2);
       case 'b':
         if (rowDiff!=columnDiff) {
           //not diagonal
           return false;
         }
-        break;
-    }
-    if (result) {
-      //test for check
-      return true;
-    }
-    else {
-      return false;
+        else {
+          //make sure the move is valid
+          return true;
+        }
+      default:
+        return true;
     }
   }
 
@@ -313,7 +324,7 @@ class Board {
         break;
       case 'k':
         //loss of castling due to king moves
-        if (piece.side) {
+        if (piece.side == 1) {
           this.castleRights[0] = false;
           this.castleRights[1] = false;
         }
@@ -323,7 +334,7 @@ class Board {
         }
         break;
       case 'r':
-        if (piece.side) {
+        if (piece.side == 1) {
           //check for white loss of castle due to rook move
           switch (startSquare[1]) {
             case 0:
