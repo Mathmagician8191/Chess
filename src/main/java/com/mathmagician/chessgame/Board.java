@@ -270,15 +270,15 @@ class Board {
         //test for capture
         else {
           //if not taking something, can't go diagonally
-          if (!capture.isPiece) {
+          if (!(capture.isPiece || endSquare == this.enPassant)) {
             return false;
           }
           //squares moved forwards
-          int squaresMoved = this.toMove ? endSquare[0]-startSquare[0] : startSquare[0]-endSquare[0];
+          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
           //move is valid if it goes 1 square forward
           if (squaresMoved == 1) {
             //if moving 1 column away, move is valid
-            return Math.abs(startSquare[1]-endSquare[1])==1;
+            return Math.abs(startSquare[0]-endSquare[0])==1;
           }
           else {
             return false;
