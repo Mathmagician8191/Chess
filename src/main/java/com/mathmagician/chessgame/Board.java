@@ -270,7 +270,7 @@ class Board {
         //test for capture
         else {
           //if not taking something, can't go diagonally
-          if (!(capture.isPiece || endSquare == this.enPassant)) {
+          if (!(capture.isPiece || Arrays.equals(endSquare, this.enPassant))) {
             return false;
           }
           //squares moved forwards
@@ -316,8 +316,10 @@ class Board {
     switch (piece.letter) {
       case 'p':
         //en passant detection
-        if (Math.abs(startSquare[0]-endSquare[0])==2) {
-          enPassant = new int[]{(startSquare[0]+endSquare[0])/2,startSquare[1]};
+        if (Math.abs(startSquare[1]-endSquare[1])==2) {
+          System.out.println("En passant");
+          enPassant = new int[]{startSquare[0],(startSquare[1]+endSquare[1])/2};
+          System.out.println(String.valueOf(enPassant[0])+enPassant[1]);
         }
         this.halfmoveClock = 0;
         break;
@@ -335,7 +337,7 @@ class Board {
       case 'r':
         if (piece.side == 1) {
           //check for white loss of castle due to rook move
-          switch (startSquare[1]) {
+          switch (startSquare[0]) {
             case 0:
               this.castleRights[1] = false;
               break;
@@ -346,7 +348,7 @@ class Board {
         }
         else {
           //check for black loss of castle due to rook moves
-          switch (startSquare[1]) {
+          switch (startSquare[0]) {
             case 0:
               this.castleRights[3] = false;
               break;
