@@ -248,7 +248,6 @@ class Board {
         if (startSquare[0]==endSquare[0]) {
           //squares moved forwards
           int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
-          System.out.println(squaresMoved);
           switch (squaresMoved) {
             case 1:
               //moving 1 square forwards is valid if the square is empty
@@ -262,7 +261,7 @@ class Board {
               }
               else {
                 //check if the 2 squares in front of the pawn are empty
-                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-1].isPiece;
+                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-(piece.side)].isPiece;
               }
             default:
               return false;

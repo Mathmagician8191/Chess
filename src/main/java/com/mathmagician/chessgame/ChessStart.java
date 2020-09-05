@@ -96,6 +96,7 @@ public class ChessStart {
     //get game info
     String gameFen = (String) fen.getSelectedItem();
     int pawnStartRow = (Integer) pawnRow.getValue();
+    System.out.println(pawnStartRow);
     int pawnSquaresMovable = (Integer) pawnSquares.getValue();
 
     gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable);
@@ -141,12 +142,10 @@ public class ChessStart {
     
     ChessStart.pane.add(row);
     
-    return new JSpinner();
+    return spinner;
   }
   
   public static void move(int[] square) {
-    System.out.println(square[0]);
-    System.out.println(square[1]);
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
       Piece[][] boardState = gameState.boardstate;
       Piece selectedPiece = boardState[square[0]][square[1]];
@@ -154,7 +153,6 @@ public class ChessStart {
       selectedSquare = square;
     }
     else if (gameState.isMoveValid(selectedSquare, square)) {
-      System.out.println("Valid Move");
       gameState.movePiece(selectedSquare, square);
       ChessStart.renderBoard();
       cards.remove(1);
