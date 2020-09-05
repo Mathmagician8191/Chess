@@ -147,9 +147,6 @@ public class ChessStart {
   
   public static void move(int[] square) {
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
-      Piece[][] boardState = gameState.boardstate;
-      Piece selectedPiece = boardState[square[0]][square[1]];
-      System.out.println(selectedPiece.letter);
       selectedSquare = square;
     }
     else if (gameState.isMoveValid(selectedSquare, square)) {

@@ -317,9 +317,7 @@ class Board {
       case 'p':
         //en passant detection
         if (Math.abs(startSquare[1]-endSquare[1])==2) {
-          System.out.println("En passant");
           enPassant = new int[]{startSquare[0],(startSquare[1]+endSquare[1])/2};
-          System.out.println(String.valueOf(enPassant[0])+enPassant[1]);
         }
         this.halfmoveClock = 0;
         break;
