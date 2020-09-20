@@ -48,11 +48,20 @@ class Board {
     //figure out the number of columns on the board
     int rowLetters = rows[0].length();
     width = 0;
+    int extraSquares = 0;
     for (int i=0;i<rowLetters;i++) {
       char piece = rows[0].charAt(i);
-      //incorrect for multi-digit square counts
-      width += Character.isDigit(piece) ? Character.getNumericValue(piece) : 1;
+      if (Character.isDigit(piece)) {
+        extraSquares *= 10;
+        extraSquares += Character.getNumericValue(piece);
+      }
+      else {
+        //add the squares from the number and the one from the piece
+        width += extraSquares + 1;
+        extraSquares = 0;
+      }
     }
+    width += extraSquares;
     
     //set up a loop to decode the FEN board state
     this.boardstate = new Piece[width][height];
@@ -194,8 +203,10 @@ class Board {
   public static int[] algebraicToNumber(String algebraic) {
     //TODO: make work with multi-digit numbers
     int[] result = new int[2];
-    result[1] = ((int) algebraic.charAt(0))-97; //find index of letter in the alphabet
-    result[0] = Character.getNumericValue(algebraic.charAt(1))-1; //-1 to shift from 1-indexed to 0-indexed
+    //find index of letter in the alphabet
+    result[1] = ((int) algebraic.charAt(0))-97;
+    //-1 to shift from 1-indexed to 0-indexed
+    result[0] = Character.getNumericValue(algebraic.charAt(1))-1;
     return result;
   }
 
@@ -224,7 +235,7 @@ class Board {
       return false;
     }
     
-    boolean result = this.validSquare(startSquare, endSquare, piece, capture);
+    boolean result = this.validSquare(startSquare, endSquare, piece.letter, piece.side, capture);
     
     if (result) {
       //test for check
@@ -235,17 +246,26 @@ class Board {
     }
   }
   
-  public boolean validSquare(int[] startSquare, int[] endSquare, Piece piece, Piece capture) {
+  public boolean validSquare(int[] startSquare, int[] endSquare, char letter, int side, Piece capture) {
     //rows and columns moved
-    int rowDiff = Math.abs(startSquare[0]-endSquare[0]);
-    int columnDiff = Math.abs(startSquare[1]-endSquare[1]);
-    switch (piece.letter) {
-      //knight
+    int rowDiff = Math.abs(startSquare[1]-endSquare[1]);
+    int columnDiff = Math.abs(startSquare[0]-endSquare[0]);
+    switch (letter) {
+      //jumping pieces
       case 'n':
-        return (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2);
+        return (rowDiff==2 && columnDiff==1) || (rowDiff==1 && columnDiff==2);
+      case 'l':
+        return (rowDiff==3 && columnDiff==1) || (rowDiff==1 && columnDiff==3);
+      case 'z':
+        return (rowDiff==3 && columnDiff==2) || (rowDiff==2 && columnDiff==3);
+      case 'h':
+        return (rowDiff==columnDiff && rowDiff<=2)
+            || (rowDiff==0 && columnDiff<=2) || (columnDiff==0 && rowDiff <=2);
+      
+      //pawn
       case 'p':
         //move forward test (columns are the same)
-        if (startSquare[0]==endSquare[0]) {
+        if (columnDiff==0) {
           //squares moved forwards
           int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
           switch (squaresMoved) {
@@ -254,14 +274,14 @@ class Board {
               return  !capture.isPiece;
             case 2:
               //valid if pawn hasn't moved and 2 squares are empty
-              int squaresFromBack = piece.side == 1 ? startSquare[1]+1 : height-startSquare[1];
+              int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
               if (squaresFromBack>pawnRow) {
                 //pawn has already moved, no double move
                 return false;
               }
               else {
                 //check if the 2 squares in front of the pawn are empty
-                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-(piece.side)].isPiece;
+                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-side].isPiece;
               }
             default:
               return false;
@@ -278,25 +298,88 @@ class Board {
           //move is valid if it goes 1 square forward
           if (squaresMoved == 1) {
             //if moving 1 column away, move is valid
-            return Math.abs(startSquare[0]-endSquare[0])==1;
+            return columnDiff==1;
           }
           else {
             return false;
           }
         }
+      
+      //king
       case 'k':
-        return rowDiff <= 1 && columnDiff <= 1;
-      case 'h':
-        return (rowDiff==columnDiff && rowDiff<=2);
+        if (rowDiff <= 1 && columnDiff <= 1) {
+          return true;
+        }
+        else {
+          //test for castling
+          if (columnDiff==2 && rowDiff==0) {
+            //test for valid castle
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+      
+      //ray attack pieces
       case 'b':
-        if (rowDiff!=columnDiff) {
+        if (rowDiff==columnDiff) {
+          //test for pieces in the way
+          int dx = endSquare[0] > startSquare[0] ? 1 : -1;
+          int dy = endSquare[1] > startSquare[1] ? 1 : -1;
+          for (int i=1;i<rowDiff;i++) {
+            int column = startSquare[0] + (i*dx);
+            int row = startSquare[1] + (i*dy);
+            if (this.boardstate[column][row].isPiece) {
+              //a piece is in the way of the move
+              return false;
+            }
+          }
+          return true;
+        }
+        else {
           //not diagonal
           return false;
         }
-        else {
-          //make sure the move is valid
+      case 'r':
+        if (columnDiff==0 || rowDiff==0) {
+          //test for pieces in the way
+          int squaresMoved = Math.max(columnDiff,rowDiff);
+          int dx = (endSquare[0]-startSquare[0])/squaresMoved;
+          int dy = (endSquare[1]-startSquare[1])/squaresMoved;
+          for (int i=1;i<squaresMoved;i++) {
+            int column = startSquare[0] + (i*dx);
+            int row = startSquare[1] + (i*dy);
+            if (this.boardstate[column][row].isPiece) {
+              //a piece is in the way of the move
+              return false;
+            }
+          }
           return true;
         }
+        else {
+          //not straight line
+          return false;
+        }
+      case 'i':
+        return true;
+      
+      //combination movers
+      case 'q':
+        return (validSquare(startSquare,endSquare,'b',side,capture))
+            || (validSquare(startSquare,endSquare,'r',side,capture));
+      case 'a':
+        return (validSquare(startSquare,endSquare,'b',side,capture))
+            || (validSquare(startSquare,endSquare,'n',side,capture));
+      case 'c':
+        return (validSquare(startSquare,endSquare,'r',side,capture))
+            || (validSquare(startSquare,endSquare,'n',side,capture));
+      case 'm':
+        return (validSquare(startSquare,endSquare,'b',side,capture))
+            || (validSquare(startSquare,endSquare,'r',side,capture))
+            || (validSquare(startSquare,endSquare,'n',side,capture));
+      
+      //any other piece we don't know, so it can go wherever
       default:
         return true;
     }

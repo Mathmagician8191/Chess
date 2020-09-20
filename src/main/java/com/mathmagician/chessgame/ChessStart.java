@@ -147,11 +147,14 @@ public class ChessStart {
   
   public static void move(int[] square) {
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
-      selectedSquare = square;
+      if (gameState.boardstate[square[0]][square[1]].side == (gameState.toMove ? 1 : -1)) {
+        selectedSquare = square;
+      }
     }
     else if (gameState.isMoveValid(selectedSquare, square)) {
       gameState.movePiece(selectedSquare, square);
       ChessStart.renderBoard();
+      //remove the last board state to prevent using up lots of memory
       cards.remove(1);
     }
     else {
