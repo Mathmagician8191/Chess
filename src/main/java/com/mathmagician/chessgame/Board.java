@@ -6,7 +6,7 @@ class Board {
   /*
   Implements logic for a chess game, with an internal representation of the
   board and move validation. It also features the ability to convert to and from
-  the common board representation FEN.
+  the common board representation FEN (Forsyth Edwards Notation).
   */
   
   //board size
@@ -30,11 +30,16 @@ class Board {
   //options for moving
   int pawnRow; //max row the pawns can n-move from
   int pawnSquares; //number of squares the pawns can move on their first move
+  int leftRookColumn;
+  int rightRookColumn;
   
-  public Board(String fen, int pawnRow, int pawnSquares) {
+  public Board(String fen,int pawnRow,int pawnSquares,int leftRookColumn,
+      int rightRookColumn) {
     this.gameOver = false;
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
+    this.leftRookColumn = leftRookColumn;
+    this.rightRookColumn = rightRookColumn;
     
     //FEN processing
     
@@ -151,7 +156,8 @@ class Board {
             result += Integer.toString(emptySquares);
             emptySquares = 0;
           }
-          result += piece.side == 1 ? Character.toUpperCase(piece.letter) : piece.letter;
+          result += piece.side==1 ? Character.toUpperCase(piece.letter) :
+              piece.letter;
         }
         else {
           emptySquares++;
@@ -195,47 +201,47 @@ class Board {
     }
 
     //half/full move clock
-    result += " " + Integer.toString(this.halfmoveClock) + " " + Integer.toString(this.moves);
+    result += " " + Integer.toString(this.halfmoveClock) + " " +
+        Integer.toString(this.moves);
     return result;
   }
 
   //converts algebraic notation into lookup coordinates
   public static int[] algebraicToNumber(String algebraic) {
-    //TODO: make work with multi-digit numbers
     int[] result = new int[2];
     //find index of letter in the alphabet
     result[1] = ((int) algebraic.charAt(0))-97;
     //-1 to shift from 1-indexed to 0-indexed
-    result[0] = Character.getNumericValue(algebraic.charAt(1))-1;
+    result[0] = Integer.parseInt(algebraic.substring(1))-1;
     return result;
   }
 
   //converts coordinates to algebraic
   public static String numberToAlgebraic(int[] number) {
-    //TODO: make work for values more than 25 (then update decode function to match)
+    //TODO: make work for values more than 25
+    // (then update decode function to match)
     String result = String.valueOf((char) (number[1]+97));
     result += Integer.toString(number[0]+1);
     return result;
   }
 
   //boolean returns whether the move is legal
-  public boolean isMoveValid(int[] startSquare, int[] endSquare) {
+  public boolean isMoveValid(int[] startSquare,int[] endSquare) {
     Piece piece = this.boardstate[startSquare[0]][startSquare[1]];
     Piece capture = this.boardstate[endSquare[0]][endSquare[1]];
 
     //test to make sure you're moving your own piece
     if (piece.side != (toMove ? 1 : -1)) {
-      System.out.println("moving enemy piece");
       return false;
     }
 
     //test if trying to capture own piece
     if (capture.side == piece.side) {
-      System.out.println("capturing own piece");
       return false;
     }
     
-    boolean result = this.validSquare(startSquare, endSquare, piece.letter, piece.side, capture);
+    boolean result = this.validSquare(startSquare,endSquare,piece.letter,
+        piece.side,capture);
     
     if (result) {
       //test for check
@@ -246,7 +252,8 @@ class Board {
     }
   }
   
-  public boolean validSquare(int[] startSquare, int[] endSquare, char letter, int side, Piece capture) {
+  public boolean validSquare(int[] startSquare,int[]endSquare,char letter,
+      int side,Piece capture) {
     //rows and columns moved
     int rowDiff = Math.abs(startSquare[1]-endSquare[1]);
     int columnDiff = Math.abs(startSquare[0]-endSquare[0]);
@@ -267,21 +274,24 @@ class Board {
         //move forward test (columns are the same)
         if (columnDiff==0) {
           //squares moved forwards
-          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
+          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] :
+              startSquare[1]-endSquare[1];
           switch (squaresMoved) {
             case 1:
               //moving 1 square forwards is valid if the square is empty
               return  !capture.isPiece;
             case 2:
               //valid if pawn hasn't moved and 2 squares are empty
-              int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
+              int squaresFromBack = side == 1 ? startSquare[1]+1 :
+                  height-startSquare[1];
               if (squaresFromBack>pawnRow) {
                 //pawn has already moved, no double move
                 return false;
               }
               else {
                 //check if the 2 squares in front of the pawn are empty
-                return !capture.isPiece && !this.boardstate[endSquare[0]][endSquare[1]-side].isPiece;
+                return !capture.isPiece &&
+                    !this.boardstate[endSquare[0]][endSquare[1]-side].isPiece;
               }
             default:
               return false;
@@ -294,7 +304,8 @@ class Board {
             return false;
           }
           //squares moved forwards
-          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] : startSquare[1]-endSquare[1];
+          int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] :
+              startSquare[1]-endSquare[1];
           //move is valid if it goes 1 square forward
           if (squaresMoved == 1) {
             //if moving 1 column away, move is valid
@@ -385,7 +396,7 @@ class Board {
     }
   }
 
-  public void movePiece(int[] startSquare, int[] endSquare) {
+  public void movePiece(int[] startSquare,int[] endSquare) {
     this.halfmoveClock++;
     //change side to move
     toMove = !toMove;
@@ -453,7 +464,7 @@ class Board {
     }
   }
 
-  public void promotePiece(int[] square, char piece) {
+  public void promotePiece(int[] square,char piece) {
     this.boardstate[square[0]][square[1]].letter = piece;
   }
 }

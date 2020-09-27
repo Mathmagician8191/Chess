@@ -23,6 +23,8 @@ public class ChessStart {
   //options for the game
   private static JSpinner pawnRow;
   private static JSpinner pawnSquares;
+  private static JSpinner leftRook;
+  private static JSpinner rightRook;
   
   //the state of the board
   private static Board gameState;
@@ -81,7 +83,14 @@ public class ChessStart {
     pawnRow = ChessStart.createRow("Max row pawns can n-move from:",2,0,2);
     
     //add max number of squares a pawn can move
-    pawnSquares = ChessStart.createRow("Max squares pawns can move first move:",2,1,2);
+    pawnSquares = ChessStart.createRow("Max squares pawns can move first move:",
+        2,1,2);
+    
+    //left rook column
+    leftRook = ChessStart.createRow("Left Rook column:",1,1,2);
+    
+    //right rook column
+    rightRook = ChessStart.createRow("Right Rook column:",8,1,2);
     
     //add cards to CardLayout
     cards.add(pane);
@@ -96,10 +105,12 @@ public class ChessStart {
     //get game info
     String gameFen = (String) fen.getSelectedItem();
     int pawnStartRow = (Integer) pawnRow.getValue();
-    System.out.println(pawnStartRow);
     int pawnSquaresMovable = (Integer) pawnSquares.getValue();
+    int leftRookColumn = (Integer) leftRook.getValue();
+    int rightRookColumn = (Integer) rightRook.getValue();
 
-    gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable);
+    gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable,
+        leftRookColumn,rightRookColumn);
     
     ChessStart.renderBoard();
     
@@ -109,11 +120,12 @@ public class ChessStart {
     }
   }
 
-  public static ImageIcon createImageIcon(String location, int width, int height) {
+  public static ImageIcon createImageIcon(String location,int width,int height) {
     java.net.URL imageURL = ChessStart.class.getResource(location);
     if (imageURL != null) {
       ImageIcon image =  new ImageIcon(imageURL);
-      Image scaledImage = image.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+      Image scaledImage = image.getImage().getScaledInstance(width, height,
+          Image.SCALE_SMOOTH);
       return new ImageIcon(scaledImage);
     }
     else {
@@ -122,7 +134,8 @@ public class ChessStart {
     }
   }
   
-  public static JSpinner createRow(String text,int defaultValue,int minimumValue,int columns) {
+  public static JSpinner createRow(String text,int defaultValue,
+      int minimumValue,int columns) {
     JPanel row = new JPanel();
     row.setLayout(new BoxLayout(row,BoxLayout.X_AXIS));
     row.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -130,7 +143,8 @@ public class ChessStart {
     JLabel label = new JLabel(text);
     row.add(label);
     
-    SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,minimumValue,Integer.MAX_VALUE,1);
+    SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,
+        minimumValue,Integer.MAX_VALUE,1);
     
     JSpinner spinner = new JSpinner(validNumbers);
     JFormattedTextField spinnerText = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
@@ -164,11 +178,26 @@ public class ChessStart {
   }
   
   public static void renderBoard() {
-    int rowCount = gameState.height;
-    int columnCount = gameState.width;
+    final int rowCount = gameState.height;
+    final int columnCount = gameState.width;
 
     //draw board
-    JPanel board = new JPanel(new GridLayout(rowCount,columnCount));
+    JPanel boardParent = new JPanel(new GridBagLayout());
+    
+    JPanel board = new JPanel(new GridLayout(rowCount,columnCount)) {
+      //Make board squares as large as possible while still being squares
+      @Override
+      public final Dimension getPreferredSize() {
+        Component parent = getParent();
+        int availableWidth = parent.getWidth();
+        int availableHeight = parent.getHeight();
+        int maxSquareWidth = availableWidth/columnCount;
+        int maxSquareHeight = availableHeight/rowCount;
+        int maxSquareSize = maxSquareWidth>maxSquareHeight ? maxSquareHeight :
+            maxSquareWidth;
+        return new Dimension(maxSquareSize*columnCount,maxSquareSize*rowCount);
+      }
+    };
     Piece[][] boardState = gameState.boardstate;
     for (int i=rowCount-1;i>=0;i--) {
       for (int j=0;j<columnCount;j++) {
@@ -176,7 +205,8 @@ public class ChessStart {
         Piece piece = boardState[j][i];
 
         //switch the case back to how it would be output in a FEN
-        Character letter = piece.side == 1 ? Character.toUpperCase(piece.letter) : piece.letter;
+        Character letter = piece.side == 1 ? Character.toUpperCase(piece.letter) :
+            piece.letter;
 
         //make a JLabel with the piece name
         Square square = new Square(new int[] {j,i}, letter);
@@ -189,7 +219,8 @@ public class ChessStart {
     selectedSquare = new int[] {-1,-1};
     
     //add panel to CardLayout
-    cards.add(board);
+    boardParent.add(board);
+    cards.add(boardParent);
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
   }
