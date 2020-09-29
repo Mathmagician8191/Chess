@@ -10,26 +10,26 @@ public class Square extends JButton implements ActionListener {
   rather than a button.
   */
   
-  static int width = 72;
-  static int height = 72;
-  static ImageIcon blackPawn = ChessStart.createImageIcon("/images/BlackPawn.png", width, height);
-  static ImageIcon blackKnight = ChessStart.createImageIcon("/images/BlackKnight.png", width, height);
-  static ImageIcon blackBishop = ChessStart.createImageIcon("/images/BlackBishop.png", width, height);
-  static ImageIcon blackRook = ChessStart.createImageIcon("/images/BlackRook.png", width, height);
-  static ImageIcon blackQueen = ChessStart.createImageIcon("/images/BlackQueen.png", width, height);
-  static ImageIcon blackKing = ChessStart.createImageIcon("/images/BlackKing.png", width, height);
-  static ImageIcon whitePawn = ChessStart.createImageIcon("/images/WhitePawn.png", width, height);
-  static ImageIcon whiteKnight = ChessStart.createImageIcon("/images/WhiteKnight.png", width, height);
-  static ImageIcon whiteBishop = ChessStart.createImageIcon("/images/WhiteBishop.png", width, height);
-  static ImageIcon whiteRook = ChessStart.createImageIcon("/images/WhiteRook.png", width, height);
-  static ImageIcon whiteQueen = ChessStart.createImageIcon("/images/WhiteQueen.png", width, height);
-  static ImageIcon whiteKing = ChessStart.createImageIcon("/images/WhiteKing.png", width, height);
+  static Image blackPawn = Square.createImage("/images/BlackPawn.png");
+  static Image blackKnight = Square.createImage("/images/BlackKnight.png");
+  static Image blackBishop = Square.createImage("/images/BlackBishop.png");
+  static Image blackRook = Square.createImage("/images/BlackRook.png");
+  static Image blackQueen = Square.createImage("/images/BlackQueen.png");
+  static Image blackKing = Square.createImage("/images/BlackKing.png");
+  static Image whitePawn = Square.createImage("/images/WhitePawn.png");
+  static Image whiteKnight = Square.createImage("/images/WhiteKnight.png");
+  static Image whiteBishop = Square.createImage("/images/WhiteBishop.png");
+  static Image whiteRook = Square.createImage("/images/WhiteRook.png");
+  static Image whiteQueen = Square.createImage("/images/WhiteQueen.png");
+  static Image whiteKing = Square.createImage("/images/WhiteKing.png");
   
   int[] coordinates;
+  char letter;
   
   public Square(int[] coordinates, char letter) {
     super(String.valueOf(letter));
     this.coordinates = coordinates;
+    this.letter = letter;
     
     //set up a colour for the square
     Color colour = (coordinates[0]+coordinates[1])%2 == 1 ?
@@ -50,51 +50,17 @@ public class Square extends JButton implements ActionListener {
     //set the icon of the square
     switch (letter) {
       case 'p':
-        this.setIcon(blackPawn);
-        this.setText("");
-        break;
       case 'n':
-        this.setIcon(blackKnight);
-        this.setText("");
-        break;
       case 'b':
-        this.setIcon(blackBishop);
-        this.setText("");
-        break;
       case 'r':
-        this.setIcon(blackRook);
-        this.setText("");
-        break;
       case 'q':
-        this.setIcon(blackQueen);
-        this.setText("");
-        break;
       case 'k':
-        this.setIcon(blackKing);
-        this.setText("");
-        break;
       case 'P':
-        this.setIcon(whitePawn);
-        this.setText("");
-        break;
       case 'N':
-        this.setIcon(whiteKnight);
-        this.setText("");
-        break;
       case 'B':
-        this.setIcon(whiteBishop);
-        this.setText("");
-        break;
       case 'R':
-        this.setIcon(whiteRook);
-        this.setText("");
-        break;
       case 'Q':
-        this.setIcon(whiteQueen);
-        this.setText("");
-        break;
       case 'K':
-        this.setIcon(whiteKing);
         this.setText("");
         break;
     }
@@ -104,5 +70,68 @@ public class Square extends JButton implements ActionListener {
     Square button = (Square) e.getSource();
     int[] square = button.coordinates;
     ChessStart.move(square);
+  }
+  
+  @Override
+  protected void paintComponent(Graphics graphics) {
+    Graphics2D twoDGraphics = (Graphics2D) graphics;
+    super.paintComponent(graphics);
+    
+    Image image;
+    
+    switch (this.letter) {
+      case 'p':
+        image = blackPawn;
+        break;
+      case 'n':
+        image = blackKnight;
+        break;
+      case 'b':
+        image = blackBishop;
+        break;
+      case 'r':
+        image = blackRook;
+        break;
+      case 'q':
+        image = blackQueen;
+        break;
+      case 'k':
+        image = blackKing;
+        break;
+      case 'P':
+        image = whitePawn;
+        break;
+      case 'N':
+        image = whiteKnight;
+        break;
+      case 'B':
+        image = whiteBishop;
+        break;
+      case 'R':
+        image = whiteRook;
+        break;
+      case 'Q':
+        image = whiteQueen;
+        break;
+      case 'K':
+        image = whiteKing;
+        break;
+      default:
+        image=null;
+    }
+    
+    twoDGraphics.drawImage(image,0,0,this.getWidth(),this.getHeight(),this);
+  }
+  
+  public static Image createImage(String location) {
+    java.net.URL imageURL = Square.class.getResource(location);
+    if (imageURL != null) {
+      ImageIcon image =  new ImageIcon(imageURL);
+      return image.getImage();
+    }
+    else {
+      System.err.println("Can't find: " + location);
+      return null;
+    }
   }
 }

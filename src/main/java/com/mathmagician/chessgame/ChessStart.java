@@ -51,8 +51,10 @@ public class ChessStart {
 
     //set up fen input as editable combo box
     String[] exampleFens = {
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1"
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
+      "rnabqkbcnr/pppppppppp/10/10/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
+      "qkbnr/ppppp/5/5/PPPPP/QKBNR w Kk - 0 1"
     };
     fen = new JComboBox(exampleFens);
     fen.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -116,21 +118,14 @@ public class ChessStart {
     
     //resize window if not maximized
     if (window.getExtendedState() == JFrame.NORMAL) {
-      window.pack();
-    }
-  }
-
-  public static ImageIcon createImageIcon(String location,int width,int height) {
-    java.net.URL imageURL = ChessStart.class.getResource(location);
-    if (imageURL != null) {
-      ImageIcon image =  new ImageIcon(imageURL);
-      Image scaledImage = image.getImage().getScaledInstance(width, height,
-          Image.SCALE_SMOOTH);
-      return new ImageIcon(scaledImage);
-    }
-    else {
-      System.err.println("Can't find: " + location);
-      return null;
+      Insets border = window.getInsets();
+      int width = 576 + border.left + border.right; //576 = 8*72
+      int height = 576 + border.top + border.bottom; //576 = 8*72
+      int currentWidth = window.getWidth();
+      int currentHeight = window.getHeight();
+      width = width > currentWidth ? width : currentWidth;
+      height = height > currentHeight ? height : currentHeight;
+      window.setSize(width,height);
     }
   }
   
