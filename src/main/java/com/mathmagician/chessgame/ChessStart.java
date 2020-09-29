@@ -129,6 +129,10 @@ public class ChessStart {
     }
   }
   
+  public static void changeTitle() {
+    window.setTitle(ChessStart.gameState.toMove ? "White to move" : "Black to Move");
+  }
+  
   public static JSpinner createRow(String text,int defaultValue,
       int minimumValue,int columns) {
     JPanel row = new JPanel();
@@ -173,6 +177,8 @@ public class ChessStart {
   }
   
   public static void renderBoard() {
+    ChessStart.changeTitle();
+    
     final int rowCount = gameState.height;
     final int columnCount = gameState.width;
 
