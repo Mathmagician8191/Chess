@@ -60,8 +60,7 @@ public class ChessStart {
     fen.setAlignmentX(Component.LEFT_ALIGNMENT);
     fen.setEditable(true);
     //make combo box only expand horizontally
-    fen.setMaximumSize(
-        new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
+    fen.setMaximumSize(new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
     pane.add(fen);
 
     //add gap between text field and button
@@ -85,8 +84,7 @@ public class ChessStart {
     pawnRow = ChessStart.createRow("Max row pawns can n-move from:",2,0,2);
     
     //add max number of squares a pawn can move
-    pawnSquares = ChessStart.createRow("Max squares pawns can move first move:",
-        2,1,2);
+    pawnSquares = ChessStart.createRow("Max squares pawns can move first move:",2,1,2);
     
     //left rook column
     leftRook = ChessStart.createRow("Left Rook column:",1,1,2);
@@ -111,8 +109,8 @@ public class ChessStart {
     int leftRookColumn = (Integer) leftRook.getValue();
     int rightRookColumn = (Integer) rightRook.getValue();
 
-    gameState = new Board(gameFen, pawnStartRow, pawnSquaresMovable,
-        leftRookColumn,rightRookColumn);
+    gameState = new Board(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
+        rightRookColumn);
     
     ChessStart.renderBoard();
     
@@ -133,8 +131,8 @@ public class ChessStart {
     window.setTitle(ChessStart.gameState.toMove ? "White to move" : "Black to Move");
   }
   
-  public static JSpinner createRow(String text,int defaultValue,
-      int minimumValue,int columns) {
+  public static JSpinner createRow(String text,int defaultValue,int minimumValue,
+      int columns) {
     JPanel row = new JPanel();
     row.setLayout(new BoxLayout(row,BoxLayout.X_AXIS));
     row.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -142,11 +140,12 @@ public class ChessStart {
     JLabel label = new JLabel(text);
     row.add(label);
     
-    SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,
-        minimumValue,Integer.MAX_VALUE,1);
+    SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,minimumValue,
+        Integer.MAX_VALUE,1);
     
     JSpinner spinner = new JSpinner(validNumbers);
-    JFormattedTextField spinnerText = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
+    JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spinner.getEditor();
+    JFormattedTextField spinnerText = editor.getTextField();
     spinnerText.setColumns(columns);
     
     spinner.setMaximumSize(spinner.getPreferredSize());
@@ -160,7 +159,7 @@ public class ChessStart {
   
   public static void move(int[] square) {
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
-      if (gameState.boardstate[square[0]][square[1]].side == (gameState.toMove ? 1 : -1)) {
+      if (gameState.boardstate[square[0]][square[1]].side==(gameState.toMove ? 1 : -1)) {
         selectedSquare = square;
       }
     }
@@ -206,10 +205,10 @@ public class ChessStart {
         Piece piece = boardState[j][i];
 
         //switch the case back to how it would be output in a FEN
-        Character letter = piece.side == 1 ? Character.toUpperCase(piece.letter) :
+        Character letter = piece.side==1 ? Character.toUpperCase(piece.letter) :
             piece.letter;
 
-        //make a JLabel with the piece name
+        //make a Customized JButton to represent the square
         Square square = new Square(new int[] {j,i}, letter);
         
         board.add(square);

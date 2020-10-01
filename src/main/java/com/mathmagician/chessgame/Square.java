@@ -32,8 +32,8 @@ public class Square extends JButton implements ActionListener {
     this.letter = letter;
     
     //set up a colour for the square
-    Color colour = (coordinates[0]+coordinates[1])%2 == 1 ?
-        new Color(255,255,255) : new Color(127,0,0);
+    Color colour = (coordinates[0]+coordinates[1])%2 == 1 ? new Color(255,255,255) :
+        new Color(127,0,0);
     
     this.addActionListener(this);
     

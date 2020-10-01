@@ -30,16 +30,22 @@ class Board {
   //options for moving
   int pawnRow; //max row the pawns can n-move from
   int pawnSquares; //number of squares the pawns can move on their first move
-  int leftRookColumn;
-  int rightRookColumn;
+  int queenRookColumn;
+  int kingRookColumn;
   
-  public Board(String fen,int pawnRow,int pawnSquares,int leftRookColumn,
-      int rightRookColumn) {
+  //useful extra info
+  int[] whiteKingLocation;
+  int[] blackKingLocation;
+  
+  public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
+      int kingRookColumn) {
     this.gameOver = false;
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
-    this.leftRookColumn = leftRookColumn;
-    this.rightRookColumn = rightRookColumn;
+    
+    //subtract 1 to 0-index rather than 1-index
+    this.queenRookColumn = queenRookColumn-1;
+    this.kingRookColumn = kingRookColumn-1;
     
     //FEN processing
     
@@ -90,6 +96,15 @@ class Board {
               column++;
             }
             squares = 0;
+          }
+          if (Character.toLowerCase(piece)=='k') {
+            //update king location
+            if (Character.toLowerCase(piece)==piece) {
+              this.blackKingLocation = new int[] {column,i};
+            }
+            else {
+              this.whiteKingLocation = new int[] {column,i};
+            }
           }
           this.boardstate[column][i] = new Piece(piece);
           column++;
@@ -156,8 +171,7 @@ class Board {
             result += Integer.toString(emptySquares);
             emptySquares = 0;
           }
-          result += piece.side==1 ? Character.toUpperCase(piece.letter) :
-              piece.letter;
+          result += piece.side==1 ? Character.toUpperCase(piece.letter) : piece.letter;
         }
         else {
           emptySquares++;
@@ -240,8 +254,8 @@ class Board {
       return false;
     }
     
-    boolean result = this.validSquare(startSquare,endSquare,piece.letter,
-        piece.side,capture);
+    boolean result = this.validSquare(startSquare,endSquare,piece.letter,piece.side,
+        capture);
     
     if (result) {
       //test for check
@@ -266,8 +280,8 @@ class Board {
       case 'z':
         return (rowDiff==3 && columnDiff==2) || (rowDiff==2 && columnDiff==3);
       case 'h':
-        return (rowDiff==columnDiff && rowDiff<=2)
-            || (rowDiff==0 && columnDiff<=2) || (columnDiff==0 && rowDiff <=2);
+        return (rowDiff==columnDiff && rowDiff<=2) || (rowDiff==0 && columnDiff<=2) ||
+            (columnDiff==0 && rowDiff <=2);
       
       //pawn
       case 'p':
@@ -282,8 +296,7 @@ class Board {
               return  !capture.isPiece;
             case 2:
               //valid if pawn hasn't moved and 2 squares are empty
-              int squaresFromBack = side == 1 ? startSquare[1]+1 :
-                  height-startSquare[1];
+              int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
               if (squaresFromBack>pawnRow) {
                 //pawn has already moved, no double move
                 return false;
@@ -325,7 +338,36 @@ class Board {
           //test for castling
           if (columnDiff==2 && rowDiff==0) {
             //test for valid castle
-            return true;
+            if (endSquare[0]>startSquare[0]) {
+              //kingside castle
+              if (castleRights[toMove?0:2]) {
+                //test for squares in the way of the rook/king
+                for (int i=startSquare[0]+1;i<kingRookColumn;i++) {
+                  if (this.boardstate[i][startSquare[1]].isPiece) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+              else {
+                return false;
+              }
+            }
+            else {
+              //queenside castle
+              if (castleRights[toMove?1:3]) {
+                //test for squares in the way of the rook/king
+                for (int i=startSquare[0]-1;i>queenRookColumn;i++) {
+                  if (this.boardstate[i][startSquare[1]].isPiece) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+              else {
+                return false;
+              }
+            }
           }
           else {
             return false;
@@ -409,13 +451,22 @@ class Board {
     enPassant = new int[]{-1,-1};
     switch (piece.letter) {
       case 'p':
-        //en passant detection
+        //en passant square detection
         if (Math.abs(startSquare[1]-endSquare[1])==2) {
           enPassant = new int[]{startSquare[0],(startSquare[1]+endSquare[1])/2};
         }
+        //TODO: detect en passant and remove pawn
         this.halfmoveClock = 0;
         break;
       case 'k':
+        //update king location
+        if (toMove) {
+          blackKingLocation = endSquare;
+        }
+        else {
+          whiteKingLocation = endSquare;
+        }
+        
         //loss of castling due to king moves
         if (piece.side == 1) {
           this.castleRights[0] = false;
@@ -425,34 +476,51 @@ class Board {
           this.castleRights[2] = false;
           this.castleRights[3] = false;
         }
+        int columnDiff = Math.abs(startSquare[0]-endSquare[0]);
+        if (columnDiff==2) {
+          if (endSquare[0]>startSquare[0]) {
+            //kingside castle
+            Piece kingRook = this.boardstate[kingRookColumn][startSquare[1]];
+            this.boardstate[endSquare[0]-1][startSquare[1]] = kingRook;
+            this.boardstate[kingRookColumn][startSquare[1]] = new Piece();
+          }
+          else {
+            //queenside castle
+            Piece queenRook = this.boardstate[queenRookColumn][startSquare[1]];
+            this.boardstate[endSquare[0]+1][startSquare[1]] = queenRook;
+            this.boardstate[queenRookColumn][startSquare[1]] = new Piece();
+          }
+        }
         break;
       case 'r':
-        if (piece.side == 1) {
-          //check for white loss of castle due to rook move
-          switch (startSquare[0]) {
-            case 0:
-              this.castleRights[1] = false;
-              break;
-            case 1:
-              this.castleRights[0] = false;
-              break;
-          }
+        //check for white loss of castle due to rook move
+        if (startSquare[0]==kingRookColumn) {
+          this.castleRights[toMove?0:2] = false;
         }
-        else {
-          //check for black loss of castle due to rook moves
-          switch (startSquare[0]) {
-            case 0:
-              this.castleRights[3] = false;
-              break;
-            case 1:
-              this.castleRights[2] = false;
-              break;
-          }
+        else if (startSquare[0]==queenRookColumn) {
+          this.castleRights[toMove?1:3] = false;
         }
-        break;
     }
+    //reset halfmoveClock in case of capture
     if (this.boardstate[endSquare[0]][endSquare[1]].isPiece) {
       this.halfmoveClock = 0;
+      //detect castling piece capture
+      if (toMove) {
+        if (Arrays.equals(endSquare,new int[] {kingRookColumn,whiteKingLocation[1]})) {
+          this.castleRights[0] = false;
+        }
+        else if (Arrays.equals(endSquare,new int[] {queenRookColumn,whiteKingLocation[1]})) {
+          this.castleRights[1] = false;
+        }
+      }
+      else {
+        if (Arrays.equals(endSquare,new int[] {kingRookColumn,blackKingLocation[1]})) {
+          this.castleRights[2] = false;
+        }
+        else if (Arrays.equals(endSquare,new int[] {queenRookColumn,blackKingLocation[1]})) {
+          this.castleRights[3] = false;
+        }
+      }
     }
     //replace piece in destination with moving piece
     this.boardstate[endSquare[0]][endSquare[1]] = piece;
