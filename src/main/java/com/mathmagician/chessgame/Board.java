@@ -144,10 +144,11 @@ class Board {
       }
     }
 
-    //en passsant square (if present). {-1,-1} means no en passant available
-    this.enPassant = new int[]{-1,-1};
+    //en passsant square (if present). {-1,-1,-1} means no en passant available
+    this.enPassant = new int[]{-1,-1,-1};
     if (!subsections[3].equals("-")) {
-      this.enPassant = Board.algebraicToNumber(subsections[3]);
+      int[] coordinates = Board.algebraicToNumber(subsections[3]);
+      this.enPassant = new int[] {coordinates[0],coordinates[1],coordinates[1]};
     }
 
     //half move clock
@@ -287,33 +288,39 @@ class Board {
       case 'p':
         //move forward test (columns are the same)
         if (columnDiff==0) {
+          if (capture.isPiece) {
+            //pawn cannot capture moving forwards
+            return false;
+          }
+          
           //squares moved forwards
           int squaresMoved = this.toMove ? endSquare[1]-startSquare[1] :
               startSquare[1]-endSquare[1];
-          switch (squaresMoved) {
-            case 1:
-              //moving 1 square forwards is valid if the square is empty
-              return  !capture.isPiece;
-            case 2:
-              //valid if pawn hasn't moved and 2 squares are empty
-              int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
-              if (squaresFromBack>pawnRow) {
-                //pawn has already moved, no double move
+          int dy = toMove ? 1 : -1;
+          if (squaresMoved > 1) {
+            if (squaresMoved > this.pawnSquares) {
+              //pawn is moving too far
+              return false;
+            }
+            int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
+            if (squaresFromBack>this.pawnRow) {
+              //pawn has already moved too far
+              return false;
+            }
+            for (int i=1;i<squaresMoved;i++) {
+              int row = startSquare[1]+(i*dy);
+              if (this.boardstate[startSquare[0]][row].isPiece) {
+                //there is a piece in the way
                 return false;
               }
-              else {
-                //check if the 2 squares in front of the pawn are empty
-                return !capture.isPiece &&
-                    !this.boardstate[endSquare[0]][endSquare[1]-side].isPiece;
-              }
-            default:
-              return false;
+            }
           }
+          return true;
         }
         //test for capture
         else {
           //if not taking something, can't go diagonally
-          if (!(capture.isPiece || Arrays.equals(endSquare, this.enPassant))) {
+          if (!(capture.isPiece || this.validEnPassant(endSquare))) {
             return false;
           }
           //squares moved forwards
@@ -437,30 +444,62 @@ class Board {
         return true;
     }
   }
+  
+  public boolean validEnPassant(int[] square) {
+    return (square[0]==this.enPassant[0])&&(square[1]>=this.enPassant[1])&&
+        (square[1]<=this.enPassant[2]);
+  }
 
   public void movePiece(int[] startSquare,int[] endSquare) {
     this.halfmoveClock++;
+    
     //change side to move
-    toMove = !toMove;
-    if (toMove) {
+    this.toMove = !this.toMove;
+    if (this.toMove) {
       this.moves++;
     }
-    //en passant
+    
+    //piece capturing
     Piece piece = this.boardstate[startSquare[0]][startSquare[1]];
-    //reset en passant square
-    enPassant = new int[]{-1,-1};
+    
+    //change in row/column
+    int columnDiff = Math.abs(startSquare[0]-endSquare[0]);
+    int rowDiff = Math.abs(startSquare[1]-endSquare[1]);
+    
+    //reset en passant square if a pawn is not moving
+    //the switch statement will reset the en passant square if a pawn is moving
+    if (!(piece.letter=='p')) {
+      this.enPassant = new int[]{-1,-1,-1};
+    }
     switch (piece.letter) {
       case 'p':
-        //en passant square detection
-        if (Math.abs(startSquare[1]-endSquare[1])==2) {
-          enPassant = new int[]{startSquare[0],(startSquare[1]+endSquare[1])/2};
+        //detected en passant
+        if (columnDiff==1 && !this.boardstate[endSquare[0]][endSquare[1]].isPiece) {
+          //en passant capture has occured
+          int rowOfPawn = this.toMove ? this.enPassant[2]+1 : this.enPassant[1]-1;
+          this.boardstate[endSquare[0]][rowOfPawn] = new Piece();
         }
-        //TODO: detect en passant and remove pawn
+        
+        //en passant square detection
+        if (rowDiff>1) {
+          if (this.toMove) {
+            //black moved last
+            this.enPassant = new int[] {startSquare[0],endSquare[1]+1,startSquare[1]-1};
+          }
+          else {
+            //white moved last
+            this.enPassant = new int[] {startSquare[0],startSquare[1]+1,endSquare[1]-1};
+          }
+        }
+        else {
+          //no double move occured
+          this.enPassant = new int[]{-1,-1,-1};
+        }
         this.halfmoveClock = 0;
         break;
       case 'k':
         //update king location
-        if (toMove) {
+        if (this.toMove) {
           blackKingLocation = endSquare;
         }
         else {
@@ -476,7 +515,6 @@ class Board {
           this.castleRights[2] = false;
           this.castleRights[3] = false;
         }
-        int columnDiff = Math.abs(startSquare[0]-endSquare[0]);
         if (columnDiff==2) {
           if (endSquare[0]>startSquare[0]) {
             //kingside castle
@@ -505,7 +543,7 @@ class Board {
     if (this.boardstate[endSquare[0]][endSquare[1]].isPiece) {
       this.halfmoveClock = 0;
       //detect castling piece capture
-      if (toMove) {
+      if (this.toMove) {
         if (Arrays.equals(endSquare,new int[] {kingRookColumn,whiteKingLocation[1]})) {
           this.castleRights[0] = false;
         }
@@ -527,8 +565,8 @@ class Board {
     //empty start square
     this.boardstate[startSquare[0]][startSquare[1]] = new Piece();
     if (this.halfmoveClock > 100) {
-      gameOver = true;
-      gameResult = 1; //draw
+      this.gameOver = true;
+      this.gameResult = 1; //draw
     }
   }
 
