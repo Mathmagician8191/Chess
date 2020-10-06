@@ -66,6 +66,7 @@ public class Square extends JButton implements ActionListener {
     }
   }
   
+  @Override
   public void actionPerformed(ActionEvent e) {
     Square button = (Square) e.getSource();
     int[] square = button.coordinates;

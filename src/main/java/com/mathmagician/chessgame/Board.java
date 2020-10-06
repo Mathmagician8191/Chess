@@ -157,6 +157,52 @@ class Board {
     //full moves
     this.moves = Integer.parseInt(subsections[5]);
   }
+  
+  public Board(Board original) {
+    //shallow copies of variables that pass by value
+    this.width = original.width;
+    this.height = original.height;
+    
+    this.toMove = original.toMove;
+    
+    this.halfmoveClock = original.halfmoveClock;
+    this.moves = original.moves;
+    
+    this.gameOver = original.gameOver;
+    this.gameResult = original.gameResult;
+    
+    this.pawnRow = original.pawnRow;
+    this.pawnSquares = original.pawnSquares;
+    this.kingRookColumn = original.kingRookColumn;
+    this.queenRookColumn = original.queenRookColumn;
+    
+    //deep copies of variables that pass by reference
+    this.castleRights = new boolean[] {
+      original.castleRights[0],
+      original.castleRights[1],
+      original.castleRights[2],
+      original.castleRights[3]
+    };
+    this.enPassant = new int[] {
+      original.enPassant[0],
+      original.enPassant[1],
+      original.enPassant[2]
+    };
+    this.whiteKingLocation = new int[] {
+      original.whiteKingLocation[0],
+      original.whiteKingLocation[1]
+    };
+    this.blackKingLocation = new int[] {
+      original.blackKingLocation[0],
+      original.blackKingLocation[1]
+    };
+    this.boardstate = new Piece[this.width][this.height];
+    for (int i=0;i<this.width;i++) {
+      for (int j=0;j<this.height;j++) {
+        this.boardstate[i][j] = original.boardstate[i][j];
+      }
+    }
+  }
 
   public String toFen() {
     String result = "";
@@ -208,11 +254,11 @@ class Board {
     }
 
     //en passant square
-    if (Arrays.equals(enPassant,new int[]{-1,-1})) {
+    if (Arrays.equals(this.enPassant,new int[]{-1,-1,-1})) {
       result += " -";
     }
     else {
-      result += " " + numberToAlgebraic(enPassant);
+      result += " " + numberToAlgebraic(this.enPassant);
     }
 
     //half/full move clock
@@ -225,9 +271,9 @@ class Board {
   public static int[] algebraicToNumber(String algebraic) {
     int[] result = new int[2];
     //find index of letter in the alphabet
-    result[1] = ((int) algebraic.charAt(0))-97;
+    result[0] = ((int) algebraic.charAt(0))-97;
     //-1 to shift from 1-indexed to 0-indexed
-    result[0] = Integer.parseInt(algebraic.substring(1))-1;
+    result[1] = Integer.parseInt(algebraic.substring(1))-1;
     return result;
   }
 
@@ -235,8 +281,8 @@ class Board {
   public static String numberToAlgebraic(int[] number) {
     //TODO: make work for values more than 25
     // (then update decode function to match)
-    String result = String.valueOf((char) (number[1]+97));
-    result += Integer.toString(number[0]+1);
+    String result = String.valueOf((char) (number[0]+97));
+    result += Integer.toString(number[1]+1);
     return result;
   }
 
@@ -260,7 +306,14 @@ class Board {
     
     if (result) {
       //test for check
-      return true;
+      Board moved = new Board(this);
+      moved.movePiece(startSquare, endSquare);
+      if (this.toMove) {
+        return !moved.isAttacked(moved.whiteKingLocation,moved.toMove);
+      }
+      else {
+        return !moved.isAttacked(moved.blackKingLocation, moved.toMove);
+      }
     }
     else {
       return false;
@@ -422,6 +475,7 @@ class Board {
           return false;
         }
       case 'i':
+        //TODO: add nightirder moves
         return true;
       
       //combination movers
@@ -443,6 +497,244 @@ class Board {
       default:
         return true;
     }
+  }
+  
+  public boolean isAttacked(int[] square,boolean side) {
+    int direction = side ? 1 : -1;
+    
+    //test for jump attacks
+    Piece[] knightJumps = this.allJumps(square, 2, 1);
+    int knightJumpCount = knightJumps.length;
+    for (int i=0;i<knightJumpCount;i++) {
+      Piece jumpTarget = knightJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'n':
+          case 'c':
+          case 'a':
+          case 'i':
+          case 'm':
+            return true;
+        }
+      }
+    }
+    
+    Piece[] camelJumps = this.allJumps(square, 3, 1);
+    int camelJumpCount = camelJumps.length;
+    for (int i=0;i<camelJumpCount;i++) {
+      Piece jumpTarget = camelJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'l':
+            return true;
+        }
+      }
+    }
+    
+    Piece[] zebraJumps = this.allJumps(square, 3, 2);
+    int zebraJumpCount = zebraJumps.length;
+    for (int i=0;i<zebraJumpCount;i++) {
+      Piece jumpTarget = zebraJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'z':
+            return true;
+        }
+      }
+    }
+    
+    Piece[] straightJumps = this.allJumps(square, 1, 0);
+    int straightJumpCount = straightJumps.length;
+    for (int i=0;i<straightJumpCount;i++) {
+      Piece jumpTarget = straightJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'h':
+          case 'k':
+          case 'r':
+          case 'q':
+          case 'c':
+          case 'm':
+            return true;
+        }
+      }
+    }
+    Piece[] straighterJumps = this.allJumps(square, 2, 0);
+    int straighterJumpCount = straighterJumps.length;
+    for (int i=0;i<straighterJumpCount;i++) {
+      Piece jumpTarget = straighterJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'h':
+          case 'r':
+          case 'q':
+          case 'c':
+          case 'm':
+            return true;
+        }
+      }
+    }
+    
+    Piece[] diagonalJumps = this.allJumps(square, 1, 1);
+    int diagonalJumpCount = diagonalJumps.length;
+    for (int i=0;i<diagonalJumpCount;i++) {
+      Piece jumpTarget = diagonalJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'h':
+          case 'k':
+          case 'b':
+          case 'q':
+          case 'a':
+          case 'm':
+            return true;
+        }
+      }
+    }
+    Piece[] diagonalerJumps = this.allJumps(square, 2, 2);
+    int diagonalerJumpCount = diagonalerJumps.length;
+    for (int i=0;i<diagonalerJumpCount;i++) {
+      Piece jumpTarget = diagonalerJumps[i];
+      if (jumpTarget.side==direction) {
+        switch (jumpTarget.letter) {
+          case 'h':
+          case 'b':
+          case 'q':
+          case 'a':
+          case 'm':
+            return true;
+        }
+      }
+    }
+    
+    //test for pawn check
+    Piece left = this.getSquare(square[0]-1,square[1]-direction);
+    Piece right = this.getSquare(square[0]+1, square[1]-direction);
+    if ((left.side==direction&&left.letter=='p')||(right.side==direction&&right.letter=='p')) {
+      return true;
+    }
+    
+    //rook attacks
+    Piece[] rookRays = this.allRays(square,1,0);
+    int rookRayCount = rookRays.length;
+    for (int i=0;i<rookRayCount;i++) {
+      Piece rayTarget = rookRays[i];
+      if (rayTarget.side==direction) {
+        switch (rayTarget.letter) {
+          case 'r':
+          case 'q':
+          case 'c':
+          case 'm':
+            //a rook-attacking piece is on a straight line
+            return true;
+        }
+      }
+    }
+    
+    //bishop attacks
+    Piece[] bishopRays = this.allRays(square,1,1);
+    int bishopRayCount = bishopRays.length;
+    for (int i=0;i<bishopRayCount;i++) {
+      Piece rayTarget = bishopRays[i];
+      if (rayTarget.side==direction) {
+        switch (rayTarget.letter) {
+          case 'b':
+          case 'q':
+          case 'a':
+          case 'm':
+            //a bishop-attacking piece is on a diagonal
+            return true;
+        }
+      }
+    }
+    
+    //nightrider attacks
+    Piece[] nightriderRays = this.allRays(square,2,1);
+    int nightriderRayCount = nightriderRays.length;
+    for (int i=0;i<nightriderRayCount;i++) {
+      Piece rayTarget = nightriderRays[i];
+      if (rayTarget.side==direction) {
+        if (rayTarget.letter=='i') {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  public Piece[] allJumps(int[] square,int dx,int dy) {
+    if (dx==dy) {
+      return new Piece[] {
+        this.getSquare(square[0]+dx,square[1]+dy),
+        this.getSquare(square[0]-dx,square[1]+dy),
+        this.getSquare(square[0]+dx,square[1]-dy),
+        this.getSquare(square[0]-dx,square[1]-dy)
+      };
+    }
+    else {
+      return new Piece[] {
+        this.getSquare(square[0]+dx,square[1]+dy),
+        this.getSquare(square[0]-dx,square[1]+dy),
+        this.getSquare(square[0]+dx,square[1]-dy),
+        this.getSquare(square[0]-dx,square[1]-dy),
+        this.getSquare(square[0]+dy,square[1]+dx),
+        this.getSquare(square[0]-dy,square[1]+dx),
+        this.getSquare(square[0]+dy,square[1]-dx),
+        this.getSquare(square[0]-dy,square[1]-dx)
+      };
+    }
+  }
+  
+  public Piece[] allRays(int[] square,int dx,int dy) {
+    //cast rays in all directions until it hits something
+    if (dx==dy) {
+      //send out 4 rays
+      return new Piece[] {
+        this.rayTarget(square,dx,dy),
+        this.rayTarget(square,-dx,dy),
+        this.rayTarget(square,dx,-dy),
+        this.rayTarget(square,-dx,-dy)
+      };
+    }
+    else {
+      //send out 8 rays
+      return new Piece[] {
+        this.rayTarget(square,dx,dy),
+        this.rayTarget(square,-dx,dy),
+        this.rayTarget(square,dx,-dy),
+        this.rayTarget(square,-dx,-dy),
+        this.rayTarget(square,dy,dx),
+        this.rayTarget(square,-dy,dx),
+        this.rayTarget(square,dy,-dx),
+        this.rayTarget(square,-dy,-dx)
+      };
+    }
+  }
+  
+  public Piece rayTarget(int[] square,int dx,int dy) {
+    //follow ray until either a piece ir the edge of the board is reached
+    int i=0;
+    while (true) {
+      i++;
+      int column = square[0]+i*dx;
+      int row = square[1]+i*dy;
+      if (column<0 || row<0 || column>=this.width || row>=this.height) {
+        //have gone off board
+        return new Piece();
+      }
+      Piece testLocation = this.boardstate[column][row];
+      if (testLocation.isPiece) {
+        return testLocation;
+      }
+    }
+  }
+  
+  public Piece getSquare(int x,int y) {
+    if (x<0 || y<0 || x>=this.width || y>=this.height) {
+      return new Piece();
+    }
+    return this.boardstate[x][y];
   }
   
   public boolean validEnPassant(int[] square) {
