@@ -288,7 +288,12 @@ class Board {
 
   //boolean returns whether the move is legal
   public boolean isMoveValid(int[] startSquare,int[] endSquare) {
-    Piece piece = this.boardstate[startSquare[0]][startSquare[1]];
+    if (endSquare[0]<0||endSquare[1]<0||endSquare[0]>=this.width||endSquare[1]>=this.height) {
+      //end Square is out-of-bounds
+      return false;
+    }
+    
+    Piece piece = this.getSquare(startSquare[0],startSquare[1]);
     Piece capture = this.boardstate[endSquare[0]][endSquare[1]];
 
     //test to make sure you're moving your own piece
@@ -438,17 +443,8 @@ class Board {
       case 'b':
         if (rowDiff==columnDiff) {
           //test for pieces in the way
-          int dx = endSquare[0] > startSquare[0] ? 1 : -1;
-          int dy = endSquare[1] > startSquare[1] ? 1 : -1;
-          for (int i=1;i<rowDiff;i++) {
-            int column = startSquare[0] + (i*dx);
-            int row = startSquare[1] + (i*dy);
-            if (this.boardstate[column][row].isPiece) {
-              //a piece is in the way of the move
-              return false;
-            }
-          }
-          return true;
+          int squaresMoved = rowDiff;
+          return validRay(startSquare,endSquare,squaresMoved);
         }
         else {
           //not diagonal
@@ -458,17 +454,7 @@ class Board {
         if (columnDiff==0 || rowDiff==0) {
           //test for pieces in the way
           int squaresMoved = Math.max(columnDiff,rowDiff);
-          int dx = (endSquare[0]-startSquare[0])/squaresMoved;
-          int dy = (endSquare[1]-startSquare[1])/squaresMoved;
-          for (int i=1;i<squaresMoved;i++) {
-            int column = startSquare[0] + (i*dx);
-            int row = startSquare[1] + (i*dy);
-            if (this.boardstate[column][row].isPiece) {
-              //a piece is in the way of the move
-              return false;
-            }
-          }
-          return true;
+          return validRay(startSquare,endSquare,squaresMoved);
         }
         else {
           //not straight line
@@ -476,7 +462,12 @@ class Board {
         }
       case 'i':
         //TODO: add nightirder moves
-        return true;
+        if (rowDiff==2*columnDiff || columnDiff==2*rowDiff) {
+          //moving in a 2-1 ratio, need to check for pieces in the way
+          int squaresMoved = Math.min(rowDiff,columnDiff);
+          return validRay(startSquare,endSquare,squaresMoved);
+        }
+        return false;
       
       //combination movers
       case 'q':
@@ -497,6 +488,20 @@ class Board {
       default:
         return true;
     }
+  }
+  
+  public boolean validRay(int[] startSquare,int[] endSquare,int squaresMoved) {
+    int dx = (endSquare[0]-startSquare[0])/squaresMoved;
+    int dy = (endSquare[1]-startSquare[1])/squaresMoved;
+    for (int i=1;i<squaresMoved;i++) {
+      int column = startSquare[0] + (i*dx);
+      int row = startSquare[1] + (i*dy);
+      if (this.boardstate[column][row].isPiece) {
+        //a piece is in the way of the move
+        return false;
+      }
+    }
+    return true;
   }
   
   public boolean isAttacked(int[] square,boolean side) {
