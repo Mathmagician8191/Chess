@@ -27,7 +27,7 @@ public class ChessStart {
   private static JSpinner rightRook;
   
   //the state of the board
-  private static Board gameState;
+  private static Game gameState;
   
   //selected square
   private static int[] selectedSquare;
@@ -72,7 +72,7 @@ public class ChessStart {
     submitButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        startGame();
+        ChessStart.startGame();
       }
     });
     pane.add(submitButton);
@@ -109,26 +109,14 @@ public class ChessStart {
     int leftRookColumn = (Integer) leftRook.getValue();
     int rightRookColumn = (Integer) rightRook.getValue();
 
-    gameState = new Board(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
+    gameState = new Game(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
         rightRookColumn);
     
     ChessStart.renderBoard();
-    
-    //resize window if not maximized
-    if (window.getExtendedState() == JFrame.NORMAL) {
-      Insets border = window.getInsets();
-      int width = 576 + border.left + border.right; //576 = 8*72
-      int height = 576 + border.top + border.bottom; //576 = 8*72
-      int currentWidth = window.getWidth();
-      int currentHeight = window.getHeight();
-      width = width > currentWidth ? width : currentWidth;
-      height = height > currentHeight ? height : currentHeight;
-      window.setSize(width,height);
-    }
   }
   
   public static void changeTitle() {
-    window.setTitle(ChessStart.gameState.toMove ? "White to move" : "Black to Move");
+    window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");
   }
   
   public static JSpinner createRow(String text,int defaultValue,int minimumValue,
@@ -159,12 +147,13 @@ public class ChessStart {
   
   public static void move(int[] square) {
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
-      if (gameState.boardstate[square[0]][square[1]].side==(gameState.toMove ? 1 : -1)) {
+      Board position = gameState.position;
+      if (position.boardstate[square[0]][square[1]].side==(position.toMove ? 1 : -1)) {
         selectedSquare = square;
       }
     }
-    else if (gameState.isMoveValid(selectedSquare, square)) {
-      gameState.movePiece(selectedSquare, square);
+    else if (gameState.position.isMoveValid(selectedSquare, square)) {
+      gameState.makeMove(selectedSquare, square);
       ChessStart.renderBoard();
       //remove the last board state to prevent using up lots of memory
       cards.remove(1);
@@ -178,12 +167,10 @@ public class ChessStart {
   public static void renderBoard() {
     ChessStart.changeTitle();
     
-    final int rowCount = gameState.height;
-    final int columnCount = gameState.width;
+    final int rowCount = gameState.position.height;
+    final int columnCount = gameState.position.width;
 
     //draw board
-    JPanel boardParent = new JPanel(new GridBagLayout());
-    
     JPanel board = new JPanel(new GridLayout(rowCount,columnCount)) {
       //Make board squares as large as possible while still being squares
       @Override
@@ -198,7 +185,7 @@ public class ChessStart {
         return new Dimension(maxSquareSize*columnCount,maxSquareSize*rowCount);
       }
     };
-    Piece[][] boardState = gameState.boardstate;
+    Piece[][] boardState = gameState.position.boardstate;
     for (int i=rowCount-1;i>=0;i--) {
       for (int j=0;j<columnCount;j++) {
         //find the piece being represented
@@ -218,10 +205,66 @@ public class ChessStart {
     //initialise selected square
     selectedSquare = new int[] {-1,-1};
     
+    //Add board to container panel
+    JPanel gameBoard = new JPanel(new GridBagLayout());
+    gameBoard.add(board,new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,
+        GridBagConstraints.NONE,new Insets(0,0,0,0),0,0));
+    
+    JPanel gameLayout = new JPanel(new GridBagLayout());
+    gameLayout.add(gameBoard,new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,
+        GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0));
+    
+    //add menu side bar
+    JPanel menu = new JPanel();
+    menu.setLayout(new BoxLayout(menu,BoxLayout.Y_AXIS));
+    
+    JButton newGame = new JButton("New Game");
+    newGame.setAlignmentX(Component.LEFT_ALIGNMENT);
+    newGame.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.newGame();
+      }
+    });
+    menu.add(newGame);
+    
+    gameLayout.add(menu);
+    
     //add panel to CardLayout
-    boardParent.add(board);
-    cards.add(boardParent);
+    cards.add(gameLayout);
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
+    
+    //resize window if not maximized
+    if (window.getExtendedState() == JFrame.NORMAL) {
+      int defaultSize = 72;
+      Board position = gameState.position;
+      
+      Insets border = window.getInsets();
+      int width = (defaultSize*position.width) + border.left + border.right +
+          menu.getPreferredSize().width;
+      int height = (defaultSize*position.height) + border.top + border.bottom;
+      
+      //get current window size
+      int currentWidth = window.getWidth();
+      int currentHeight = window.getHeight();
+      
+      Rectangle currentScreen = window.getGraphicsConfiguration().getBounds();
+      int screenWidth = currentScreen.width;
+      int screenHeight = currentScreen.height;
+      width = Math.min(width,screenWidth);
+      height = Math.min(height, screenHeight);
+      
+      //update width/height to set
+      width = Math.max(width,currentWidth);
+      height = Math.max(height,currentHeight);
+      window.setSize(width,height);
+    }
+  }
+  
+  public static void newGame() {
+    CardLayout cardLayout = (CardLayout) cards.getLayout();
+    cardLayout.next(cards);
+    cards.remove(1);
   }
 }

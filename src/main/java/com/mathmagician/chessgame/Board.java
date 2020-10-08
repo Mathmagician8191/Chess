@@ -23,9 +23,7 @@ class Board {
   int halfmoveClock; //half moves since last capture/pawn move
   int moves;
   
-  //game state
-  boolean gameOver;
-  int gameResult; //0=white win, 1=draw, 2=black win
+  boolean inCheck; //whether the side to move is in check
   
   //options for moving
   int pawnRow; //max row the pawns can n-move from
@@ -39,7 +37,6 @@ class Board {
   
   public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
       int kingRookColumn) {
-    this.gameOver = false;
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
     
@@ -156,6 +153,8 @@ class Board {
 
     //full moves
     this.moves = Integer.parseInt(subsections[5]);
+    
+    this.detectCheck();
   }
   
   public Board(Board original) {
@@ -168,8 +167,7 @@ class Board {
     this.halfmoveClock = original.halfmoveClock;
     this.moves = original.moves;
     
-    this.gameOver = original.gameOver;
-    this.gameResult = original.gameResult;
+    this.inCheck = original.inCheck;
     
     this.pawnRow = original.pawnRow;
     this.pawnSquares = original.pawnSquares;
@@ -412,7 +410,12 @@ class Board {
                     return false;
                   }
                 }
-                return true;
+                if (this.isAttacked(new int[] {(endSquare[0]+startSquare[0])/2,startSquare[1]},
+                    !this.toMove)) {
+                  //moving through check
+                  return false;
+                }
+                return !inCheck;
               }
               else {
                 return false;
@@ -422,12 +425,17 @@ class Board {
               //queenside castle
               if (castleRights[toMove?1:3]) {
                 //test for squares in the way of the rook/king
-                for (int i=startSquare[0]-1;i>queenRookColumn;i++) {
+                for (int i=startSquare[0]-1;i>queenRookColumn;i--) {
                   if (this.boardstate[i][startSquare[1]].isPiece) {
                     return false;
                   }
                 }
-                return true;
+                if (this.isAttacked(new int[] {(endSquare[0]+startSquare[0])/2,startSquare[1]},
+                    !this.toMove)) {
+                  //moving through check
+                  return false;
+                }
+                return !inCheck;
               }
               else {
                 return false;
@@ -861,10 +869,13 @@ class Board {
     this.boardstate[endSquare[0]][endSquare[1]] = piece;
     //empty start square
     this.boardstate[startSquare[0]][startSquare[1]] = new Piece();
-    if (this.halfmoveClock > 100) {
-      this.gameOver = true;
-      this.gameResult = 1; //draw
-    }
+    
+    this.detectCheck();
+  }
+  
+  public void detectCheck() {
+    this.inCheck = this.toMove ? this.isAttacked(whiteKingLocation,!this.toMove) :
+        this.isAttacked(blackKingLocation,!this.toMove);
   }
 
   public void promotePiece(int[] square,char piece) {
