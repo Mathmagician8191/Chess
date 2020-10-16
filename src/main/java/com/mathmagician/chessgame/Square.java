@@ -21,6 +21,9 @@ public class Square extends JButton implements ActionListener {
   static Image blackNightrider = Square.createImage("/images/BlackNightrider.png");
   static Image blackZebra = Square.createImage("/images/BlackZebra.png");
   static Image blackChampion = Square.createImage("/images/BlackChampion.png");
+  static Image blackCamel = Square.createImage("/images/BlackCamel.png");
+  static Image blackAmazon = Square.createImage("/images/BlackAmazon.png");
+  static Image blackMann = Square.createImage("/images/BlackMann.png");
   static Image whitePawn = Square.createImage("/images/WhitePawn.png");
   static Image whiteKnight = Square.createImage("/images/WhiteKnight.png");
   static Image whiteBishop = Square.createImage("/images/WhiteBishop.png");
@@ -32,6 +35,9 @@ public class Square extends JButton implements ActionListener {
   static Image whiteNightrider = Square.createImage("/images/WhiteNightrider.png");
   static Image whiteZebra = Square.createImage("/images/WhiteZebra.png");
   static Image whiteChampion = Square.createImage("/images/WhiteChampion.png");
+  static Image whiteCamel = Square.createImage("/images/WhiteCamel.png");
+  static Image whiteAmazon = Square.createImage("/images/WhiteAmazon.png");
+  static Image whiteMann = Square.createImage("/images/WhiteMann.png");
   
   int[] coordinates;
   char letter;
@@ -59,19 +65,21 @@ public class Square extends JButton implements ActionListener {
     this.setBorderPainted(false);
     
     //set the icon of the square
-    switch (letter) {
+    switch (Character.toLowerCase(letter)) {
       case 'p':
       case 'n':
       case 'b':
       case 'r':
       case 'q':
       case 'k':
-      case 'P':
-      case 'N':
-      case 'B':
-      case 'R':
-      case 'Q':
-      case 'K':
+      case 'a':
+      case 'c':
+      case 'i':
+      case 'z':
+      case 'h':
+      case 'l':
+      case 'm':
+      case 'x':
         this.setText("");
         break;
     }
@@ -125,6 +133,15 @@ public class Square extends JButton implements ActionListener {
       case 'h':
         image = blackChampion;
         break;
+      case 'l':
+        image = blackCamel;
+        break;
+      case 'm':
+        image = blackAmazon;
+        break;
+      case 'x':
+        image = blackMann;
+        break;
       case 'P':
         image = whitePawn;
         break;
@@ -157,6 +174,15 @@ public class Square extends JButton implements ActionListener {
         break;
       case 'H':
         image = whiteChampion;
+        break;
+      case 'L':
+        image = whiteCamel;
+        break;
+      case 'M':
+        image = whiteAmazon;
+        break;
+      case 'X':
+        image = whiteMann;
         break;
       default:
         image=null;

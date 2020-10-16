@@ -388,6 +388,8 @@ class Board {
         return (rowDiff==3 && columnDiff==1) || (rowDiff==1 && columnDiff==3);
       case 'z':
         return (rowDiff==3 && columnDiff==2) || (rowDiff==2 && columnDiff==3);
+      case 'x':
+        return rowDiff<=1 && columnDiff <= 1;
       case 'h':
         return (rowDiff==columnDiff && rowDiff<=2) || (rowDiff==0 && columnDiff<=2) ||
             (columnDiff==0 && rowDiff <=2);
@@ -619,6 +621,7 @@ class Board {
       if (jumpTarget.side==direction) {
         switch (jumpTarget.letter) {
           case 'h':
+          case 'x':
           case 'k':
           case 'r':
           case 'q':
@@ -635,10 +638,6 @@ class Board {
       if (jumpTarget.side==direction) {
         switch (jumpTarget.letter) {
           case 'h':
-          case 'r':
-          case 'q':
-          case 'c':
-          case 'm':
             return true;
         }
       }
@@ -651,6 +650,7 @@ class Board {
       if (jumpTarget.side==direction) {
         switch (jumpTarget.letter) {
           case 'h':
+          case 'x':
           case 'k':
           case 'b':
           case 'q':
@@ -667,10 +667,6 @@ class Board {
       if (jumpTarget.side==direction) {
         switch (jumpTarget.letter) {
           case 'h':
-          case 'b':
-          case 'q':
-          case 'a':
-          case 'm':
             return true;
         }
       }
@@ -952,6 +948,63 @@ class Board {
       }
     }
     return false;
+  }
+  
+  public boolean isSufficientMaterial() {
+    int colourBoundWhite = 0;
+    int colourBoundBlack = 0;
+    int otherPieces = 0;
+    for (int i=0;i<this.width;i++) {
+      for (int j=0;j<this.height;j++) {
+        Piece piece = this.boardstate[j][i];
+        if (piece.isPiece) {
+          switch (piece.letter) {
+            case 'm':
+            case 'q':
+            case 'c':
+            case 'a':
+            case 'r':
+            case 'h':
+            case 'x':
+            case 'p':
+              //these pieces can mate alone
+              return true;
+            case 'n':
+            case 'z':
+            case 'i':
+              otherPieces++;
+              break;
+            case 'b':
+            case 'l':
+              //colour-bound pieces
+              if ((i+j)%2==1) {
+                colourBoundWhite++;
+              }
+              else {
+                colourBoundBlack++;
+              }
+              break;
+            case 'k':
+              //king is ignored
+              break;
+            default:
+              //assume any other piece can mate alone
+              return true;
+          }
+        }
+      }
+    }
+    if (otherPieces >= 2) {
+      return true;
+    }
+    else if (otherPieces==1) {
+      //detect if a colour bound piece exists to mate with
+      return (colourBoundWhite > 0) || (colourBoundBlack > 0);
+    }
+    else {
+      //detect if colurbound pieces exist on both colours
+      return (colourBoundWhite > 0) && (colourBoundBlack > 0);
+    }
   }
 
   public void promotePiece(int[] square,char piece) {

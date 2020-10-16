@@ -57,6 +57,7 @@ public class ChessStart {
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
       "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
       "rnabqkbcnr/pppppppppp/10/10/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
+      "rhbicmkqabhr/lnlzxnnxzlnl/pppppppppppp/12/12/12/12/PPPPPPPPPPPP/LNLZXNNXZLNL/RHBICMKQABHR w KQkq - 0 1",
       "qkbnr/ppppp/5/5/PPPPP/QKBNR w Kk - 0 1"
     };
     fen = new JComboBox(exampleFens);
@@ -120,7 +121,7 @@ public class ChessStart {
   
   public static void changeTitle() {
     if (gameState.position.gameOver) {
-      window.setTitle("Game Over");
+      window.setTitle("Game Over. " + gameState.endCause);
     }
     else {
       window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");

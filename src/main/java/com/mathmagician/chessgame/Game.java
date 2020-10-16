@@ -23,7 +23,7 @@ public class Game {
     this.position = new Board(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn);
     this.checkResult();
     this.pastPositions = new ArrayList<>();
-    this.pastPositions.add(this.position);
+    this.pastPositions.add(new Board(this.position));
     this.duplicatedPositions = new ArrayList<>();
   }
   
@@ -54,7 +54,7 @@ public class Game {
     
     this.checkResult();
    
-    this.pastPositions.add(this.position);
+    this.pastPositions.add(new Board(this.position));
   }
   
   public boolean checkResult() {
@@ -69,25 +69,54 @@ public class Game {
     }
     
     //3-fold repitition
+    if (!(null == this.duplicatedPositions)) {
+      for (Board duplicatedPosition : this.duplicatedPositions) {
+        if (this.position.equals(duplicatedPosition)) {
+          this.position.gameOver = true;
+          this.gameResult = 0;
+          this.endCause = "Draw by 3-fold repitition";
+          return true;
+        }
+      }
+    }
     
+    if (!(null == this.pastPositions)) {
+      for (Board pastPosition : this.pastPositions) {
+        if (this.position.equals(pastPosition)) {
+          this.duplicatedPositions.add(new Board(this.position));
+        }
+      }
+    }
     
     //checkmate/stalemate
     if (!this.position.anyMoves()) {
       this.position.gameOver = true;
       if (this.position.inCheck) {
         //checkmate
-        this.gameResult = this.position.toMove ? -1 : 1;
-        this.endCause = "Checkmate";
+        if (this.position.toMove) {
+          this.gameResult = -1;
+          this.endCause = "Black wins by Checkmate";
+        }
+        else {
+          this.gameResult = 1;
+          this.endCause = "White wins by Checkmate";
+        }
       }
       else {
         //stalemate
         this.gameResult = 0;
-        this.endCause = "Stalemate";
+        this.endCause = "Draw by Stalemate";
       }
+      return true;
     }
     
     //insufficient material
     // occurs when the non-kings are incapable of attacking 2 consecutive squares
+    if (!this.position.isSufficientMaterial()) {
+      this.position.gameOver = true;
+      this.gameResult = 0;
+      this.endCause = "Draw by insufficient material";
+    }
     
     return false;
   }
