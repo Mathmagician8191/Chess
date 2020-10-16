@@ -16,15 +16,26 @@ public class Square extends JButton implements ActionListener {
   static Image blackRook = Square.createImage("/images/BlackRook.png");
   static Image blackQueen = Square.createImage("/images/BlackQueen.png");
   static Image blackKing = Square.createImage("/images/BlackKing.png");
+  static Image blackArchbishop = Square.createImage("/images/BlackArchbishop.png");
+  static Image blackChancellor = Square.createImage("/images/BlackChancellor.png");
+  static Image blackNightrider = Square.createImage("/images/BlackNightrider.png");
+  static Image blackZebra = Square.createImage("/images/BlackZebra.png");
+  static Image blackChampion = Square.createImage("/images/BlackChampion.png");
   static Image whitePawn = Square.createImage("/images/WhitePawn.png");
   static Image whiteKnight = Square.createImage("/images/WhiteKnight.png");
   static Image whiteBishop = Square.createImage("/images/WhiteBishop.png");
   static Image whiteRook = Square.createImage("/images/WhiteRook.png");
   static Image whiteQueen = Square.createImage("/images/WhiteQueen.png");
   static Image whiteKing = Square.createImage("/images/WhiteKing.png");
+  static Image whiteArchbishop = Square.createImage("/images/WhiteArchbishop.png");
+  static Image whiteChancellor = Square.createImage("/images/WhiteChancellor.png");
+  static Image whiteNightrider = Square.createImage("/images/WhiteNightrider.png");
+  static Image whiteZebra = Square.createImage("/images/WhiteZebra.png");
+  static Image whiteChampion = Square.createImage("/images/WhiteChampion.png");
   
   int[] coordinates;
   char letter;
+  Color colour;
   
   public Square(int[] coordinates, char letter) {
     super(String.valueOf(letter));
@@ -32,12 +43,12 @@ public class Square extends JButton implements ActionListener {
     this.letter = letter;
     
     //set up a colour for the square
-    Color colour = (coordinates[0]+coordinates[1])%2 == 1 ? new Color(255,255,255) :
-        new Color(127,0,0);
+    this.colour = (coordinates[0]+coordinates[1])%2 == 1 ? new Color(240,217,181) :
+        new Color(160,128,96);
     
     this.addActionListener(this);
     
-    this.setBackground(colour);
+    this.setBackground(this.colour);
     
     //set opaque so background is visible
     this.setOpaque(true);
@@ -99,6 +110,21 @@ public class Square extends JButton implements ActionListener {
       case 'k':
         image = blackKing;
         break;
+      case 'a':
+        image = blackArchbishop;
+        break;
+      case 'c':
+        image = blackChancellor;
+        break;
+      case 'i':
+        image = blackNightrider;
+        break;
+      case 'z':
+        image = blackZebra;
+        break;
+      case 'h':
+        image = blackChampion;
+        break;
       case 'P':
         image = whitePawn;
         break;
@@ -117,6 +143,21 @@ public class Square extends JButton implements ActionListener {
       case 'K':
         image = whiteKing;
         break;
+      case 'A':
+        image = whiteArchbishop;
+        break;
+      case 'C':
+        image = whiteChancellor;
+        break;
+      case 'I':
+        image = whiteNightrider;
+        break;
+      case 'Z':
+        image = whiteZebra;
+        break;
+      case 'H':
+        image = whiteChampion;
+        break;
       default:
         image=null;
     }
@@ -134,5 +175,13 @@ public class Square extends JButton implements ActionListener {
       System.err.println("Can't find: " + location);
       return null;
     }
+  }
+  
+  public void select(Color colour) {
+    this.setBackground(colour);
+  }
+  
+  public void deSelect() {
+    this.setBackground(this.colour);
   }
 }

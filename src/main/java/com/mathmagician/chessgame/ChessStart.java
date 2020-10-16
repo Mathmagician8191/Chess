@@ -26,6 +26,9 @@ public class ChessStart {
   private static JSpinner leftRook;
   private static JSpinner rightRook;
   
+  //squares
+  private static Square[][] boardSquares;
+  
   //the state of the board
   private static Game gameState;
   
@@ -116,7 +119,12 @@ public class ChessStart {
   }
   
   public static void changeTitle() {
-    window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");
+    if (gameState.position.gameOver) {
+      window.setTitle("Game Over");
+    }
+    else {
+      window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");
+    }
   }
   
   public static JSpinner createRow(String text,int defaultValue,int minimumValue,
@@ -150,15 +158,45 @@ public class ChessStart {
       Board position = gameState.position;
       if (position.boardstate[square[0]][square[1]].side==(position.toMove ? 1 : -1)) {
         selectedSquare = square;
+        
+        //colour the selected piece
+        boardSquares[square[0]][square[1]].select(new Color(192,192,0));
       }
     }
     else if (gameState.position.isMoveValid(selectedSquare, square)) {
       gameState.makeMove(selectedSquare, square);
+      
+      //save square moved from for later
+      int selectedColumn = selectedSquare[0];
+      int selectedRow = selectedSquare[1];
+      
       ChessStart.renderBoard();
+      
+      //colour the squares moved from and to
+      Color lastMoveColour = new Color(64,192,0);
+      boardSquares[square[0]][square[1]].select(lastMoveColour);
+      boardSquares[selectedColumn][selectedRow].select(lastMoveColour);
+      
+      //colour the king if in check
+      if (gameState.position.inCheck) {
+        int[] kingLocation;
+        if (gameState.position.toMove) {
+          //white is in check
+          kingLocation = gameState.position.whiteKingLocation;
+        }
+        else {
+          //black is in check
+          kingLocation = gameState.position.blackKingLocation;
+        }
+        Color checkColour = new Color(192,0,0);
+        boardSquares[kingLocation[0]][kingLocation[1]].select(checkColour);
+      }
+      
       //remove the last board state to prevent using up lots of memory
       cards.remove(1);
     }
     else {
+      boardSquares[selectedSquare[0]][selectedSquare[1]].deSelect();
       selectedSquare = new int[] {-1,-1};
     }
     
@@ -186,6 +224,7 @@ public class ChessStart {
       }
     };
     Piece[][] boardState = gameState.position.boardstate;
+    boardSquares = new Square[columnCount][rowCount];
     for (int i=rowCount-1;i>=0;i--) {
       for (int j=0;j<columnCount;j++) {
         //find the piece being represented
@@ -197,6 +236,7 @@ public class ChessStart {
 
         //make a Customized JButton to represent the square
         Square square = new Square(new int[] {j,i}, letter);
+        boardSquares[j][i] = square;
         
         board.add(square);
       }

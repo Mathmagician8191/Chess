@@ -24,6 +24,7 @@ class Board {
   int moves;
   
   boolean inCheck; //whether the side to move is in check
+  boolean gameOver;
   
   //options for moving
   int pawnRow; //max row the pawns can n-move from
@@ -37,6 +38,7 @@ class Board {
   
   public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
       int kingRookColumn) {
+    this.gameOver = false;
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
     
@@ -168,6 +170,7 @@ class Board {
     this.moves = original.moves;
     
     this.inCheck = original.inCheck;
+    this.gameOver = original.gameOver;
     
     this.pawnRow = original.pawnRow;
     this.pawnSquares = original.pawnSquares;
@@ -197,11 +200,56 @@ class Board {
     this.boardstate = new Piece[this.width][this.height];
     for (int i=0;i<this.width;i++) {
       for (int j=0;j<this.height;j++) {
-        this.boardstate[i][j] = original.boardstate[i][j];
+        this.boardstate[i][j] = new Piece(original.boardstate[i][j]);
       }
     }
   }
-
+  
+  @Override
+  public boolean equals(Object other) {
+    if (this==other) {
+      return true;
+    }
+    if (other == null) {
+      return false;
+    }
+    if (this.getClass() != other.getClass()) {
+      return false;
+    }
+    return this.equals((Board) other);
+  }
+  
+  public boolean equals(Board other) {
+    //detects whether 2 positions are the same
+    if (this==other) {
+      return true;
+    }
+    if (other == null) {
+      return false;
+    }
+    
+    //test primitives for equality
+    if (this.width!=other.width || this.height!=other.height ||
+        this.toMove!=other.toMove || this.inCheck!=other.inCheck ||
+        this.gameOver != other.gameOver || this.pawnRow!=other.pawnRow ||
+        this.pawnSquares!=other.pawnSquares ||
+        this.queenRookColumn!=other.queenRookColumn ||
+        this.kingRookColumn!=other.kingRookColumn) {
+      return false;
+    }
+    
+    //test arrays for equality
+    if (!Arrays.equals(this.castleRights,other.castleRights) ||
+        !Arrays.equals(this.enPassant,other.enPassant) ||
+        !Arrays.equals(this.whiteKingLocation,other.whiteKingLocation) ||
+        !Arrays.equals(this.blackKingLocation,other.blackKingLocation)) {
+      return false;
+    }
+    
+    //test boardstate for equality
+    return Arrays.deepEquals(this.boardstate, other.boardstate);
+  }
+  
   public String toFen() {
     String result = "";
     //piece arrangement
@@ -286,6 +334,10 @@ class Board {
 
   //boolean returns whether the move is legal
   public boolean isMoveValid(int[] startSquare,int[] endSquare) {
+    if (this.gameOver) {
+      return false;
+    }
+    
     if (endSquare[0]<0||endSquare[1]<0||endSquare[0]>=this.width||endSquare[1]>=this.height) {
       //end Square is out-of-bounds
       return false;
@@ -370,6 +422,10 @@ class Board {
                 return false;
               }
             }
+          }
+          if (squaresMoved < 0) {
+            //pawns can't go backwards
+            return false;
           }
           return true;
         }
@@ -876,6 +932,26 @@ class Board {
   public void detectCheck() {
     this.inCheck = this.toMove ? this.isAttacked(whiteKingLocation,!this.toMove) :
         this.isAttacked(blackKingLocation,!this.toMove);
+  }
+  
+  public boolean anyMoves() {
+    //checkmate/stalemate
+    for (int i=0;i<this.width;i++) {
+      for (int j=0;j<this.height;j++) {
+        Piece target = this.boardstate[i][j];
+        if (target.isPiece) {
+          //test for any valid moves
+          for (int k=0;k<this.width;k++) {
+            for (int l=0;l<this.height;l++) {
+              if (this.isMoveValid(new int[] {i,j},new int[] {k,l})) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public void promotePiece(int[] square,char piece) {
