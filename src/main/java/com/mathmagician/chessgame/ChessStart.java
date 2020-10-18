@@ -304,6 +304,7 @@ public class ChessStart {
   }
   
   public static void newGame() {
+    window.setTitle("Choose game FEN");
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
     cards.remove(1);
