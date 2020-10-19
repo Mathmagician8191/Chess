@@ -1,6 +1,7 @@
 package com.mathmagician.chessgame;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -17,10 +18,12 @@ public class ChessStart {
   private static JPanel pane;
   
   //elements in gui
-  private static JComboBox fen;
+  private static JComboBox presets;
   private static JButton submitButton;
+  private static JButton setPreset;
   
   //options for the game
+  private static JTextField fen;
   private static JSpinner pawnRow;
   private static JSpinner pawnSquares;
   private static JSpinner leftRook;
@@ -51,25 +54,23 @@ public class ChessStart {
     pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
     pane.setBorder(border);
-
-    //set up fen input as editable combo box
-    String[] exampleFens = {
-      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-      "rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
-      "rnabqkbcnr/pppppppppp/10/10/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1",
-      "rhbicmkqabhr/lnlzxnnxzlnl/pppppppppppp/12/12/12/12/PPPPPPPPPPPP/LNLZXNNXZLNL/RHBICMKQABHR w KQkq - 0 1",
-      "qkbnr/ppppp/5/5/PPPPP/QKBNR w Kk - 0 1"
+    
+    String[] presetNames = {
+      "Standard",
+      "Mini chess",
+      "Capablanca (10x8)",
+      "Capablanca (10x10)",
+      "12x12",
+      "Cavalry charge"
     };
-    fen = new JComboBox(exampleFens);
-    fen.setAlignmentX(Component.LEFT_ALIGNMENT);
-    fen.setEditable(true);
-    //make combo box only expand horizontally
-    fen.setMaximumSize(new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
-    pane.add(fen);
-
-    //add gap between text field and button
+    presets = new JComboBox(presetNames);
+    presets.setAlignmentX(Component.LEFT_ALIGNMENT);
+    presets.setMaximumSize(presets.getPreferredSize());
+    pane.add(presets);
+    
+    //add gap
     pane.add(Box.createRigidArea(new Dimension(0,20)));
-
+    
     //button to submit
     submitButton = new JButton("Start Game");
     submitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -81,7 +82,31 @@ public class ChessStart {
     });
     pane.add(submitButton);
     
-    //add space between the button and the game options
+    //add gap
+    pane.add(Box.createRigidArea(new Dimension(0,20)));
+    
+    //button to apply the selected preset
+    setPreset = new JButton("Apply preset");
+    setPreset.setAlignmentX(Component.LEFT_ALIGNMENT);
+    setPreset.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.setPreset();
+      }
+    });
+    pane.add(setPreset);
+    
+    //add gap
+    pane.add(Box.createRigidArea(new Dimension(0,20)));
+    
+    //set up fen input as editable text field
+    fen = new JTextField(60);
+    fen.setAlignmentX(Component.LEFT_ALIGNMENT);
+    //make combo box only expand horizontally
+    fen.setMaximumSize(new Dimension(Integer.MAX_VALUE, fen.getPreferredSize().height));
+    pane.add(fen);
+
+    //add gap
     pane.add(Box.createRigidArea(new Dimension(0,20)));
     
     //add label for max n-move row
@@ -98,6 +123,9 @@ public class ChessStart {
     
     //add cards to CardLayout
     cards.add(pane);
+    
+    //set up default settings
+    ChessStart.setPreset();
 
     //Display
     window.add(cards);
@@ -107,7 +135,7 @@ public class ChessStart {
 
   public static void startGame() {
     //get game info
-    String gameFen = (String) fen.getSelectedItem();
+    String gameFen = (String) fen.getText();
     int pawnStartRow = (Integer) pawnRow.getValue();
     int pawnSquaresMovable = (Integer) pawnSquares.getValue();
     int leftRookColumn = (Integer) leftRook.getValue();
@@ -269,6 +297,16 @@ public class ChessStart {
     });
     menu.add(newGame);
     
+    JButton copyFen = new JButton("Copy FEN to clipboard");
+    copyFen.setAlignmentX(Component.LEFT_ALIGNMENT);
+    copyFen.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.copyFen();
+      }
+    });
+    menu.add(copyFen);
+    
     gameLayout.add(menu);
     
     //add panel to CardLayout
@@ -308,5 +346,64 @@ public class ChessStart {
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
     cards.remove(1);
+  }
+  
+  public static void setPreset() {
+    switch ((String) presets.getSelectedItem()) {
+      case "Standard":
+        //standard chess
+        fen.setText("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(2);
+        leftRook.setValue(1);
+        rightRook.setValue(8);
+        break;
+      case "Mini chess":
+        //miniature board
+        fen.setText("qkbnr/ppppp/5/5/PPPPP/QKBNR w Kk - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(1);
+        leftRook.setValue(1);
+        rightRook.setValue(6);
+        break;
+      case "Capablanca (10x8)":
+        //standard chess
+        fen.setText("rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(2);
+        leftRook.setValue(1);
+        rightRook.setValue(10);
+        break;
+      case "Capablanca (10x10)":
+        //standard chess
+        fen.setText("rnabqkbcnr/pppppppppp/10/10/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(3);
+        leftRook.setValue(1);
+        rightRook.setValue(10);
+        break;
+      case "12x12":
+        //standard chess
+        fen.setText("rhbicmkqabhr/lnlzxnnxzlnl/pppppppppppp/12/12/12/12/12/12/PPPPPPPPPPPP/LNLZXNNXZLNL/RHBICMKQABHR w KQkq - 0 1");
+        pawnRow.setValue(3);
+        pawnSquares.setValue(3);
+        leftRook.setValue(1);
+        rightRook.setValue(12);
+        break;
+      case "Cavalry charge":
+        //standard chess
+        fen.setText("nnnnknnn/pppppppp/8/8/8/8/PPPPPPPP/NNNNKNNN w - - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(2);
+        leftRook.setValue(1);
+        rightRook.setValue(8);
+        break;
+    }
+  }
+  
+  public static void copyFen() {
+    String currentFen = ChessStart.gameState.position.toFen();
+    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    clipboard.setContents(new StringSelection(currentFen),null);
   }
 }
