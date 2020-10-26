@@ -32,6 +32,10 @@ class Board {
   int queenRookColumn;
   int kingRookColumn;
   
+  //promotion info
+  boolean promotionAvailable;
+  int[] promotionSquare;
+  
   //useful extra info
   int[] whiteKingLocation;
   int[] blackKingLocation;
@@ -39,6 +43,8 @@ class Board {
   public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
       int kingRookColumn) {
     this.gameOver = false;
+    this.promotionAvailable = false;
+    this.promotionSquare = new int[] {-1,-1};
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
     
@@ -177,6 +183,8 @@ class Board {
     this.kingRookColumn = original.kingRookColumn;
     this.queenRookColumn = original.queenRookColumn;
     
+    this.promotionAvailable = original.promotionAvailable;
+    
     //deep copies of variables that pass by reference
     this.castleRights = new boolean[] {
       original.castleRights[0],
@@ -188,6 +196,10 @@ class Board {
       original.enPassant[0],
       original.enPassant[1],
       original.enPassant[2]
+    };
+    this.promotionSquare = new int[] {
+      original.promotionSquare[0],
+      original.promotionSquare[1]
     };
     this.whiteKingLocation = new int[] {
       original.whiteKingLocation[0],
@@ -334,7 +346,7 @@ class Board {
 
   //boolean returns whether the move is legal
   public boolean isMoveValid(int[] startSquare,int[] endSquare) {
-    if (this.gameOver) {
+    if (this.gameOver || this.promotionAvailable) {
       return false;
     }
     
@@ -412,7 +424,7 @@ class Board {
               //pawn is moving too far
               return false;
             }
-            int squaresFromBack = side == 1 ? startSquare[1]+1 : height-startSquare[1];
+            int squaresFromBack = side == 1 ? startSquare[1]+1 : this.height-startSquare[1];
             if (squaresFromBack>this.pawnRow) {
               //pawn has already moved too far
               return false;
@@ -549,6 +561,10 @@ class Board {
         return (validSquare(startSquare,endSquare,'b',side,capture))
             || (validSquare(startSquare,endSquare,'r',side,capture))
             || (validSquare(startSquare,endSquare,'n',side,capture));
+      
+      //obstacle
+      case 'o':
+        return !capture.isPiece;
       
       //any other piece we don't know, so it can go wherever
       default:
@@ -852,6 +868,18 @@ class Board {
           //no double move occured
           this.enPassant = new int[]{-1,-1,-1};
         }
+        
+        //pawn promotion detection
+        int squaresFromBack = piece.side == 1 ? endSquare[1]+1 : this.height-endSquare[1];
+        if (squaresFromBack == this.height) {
+          this.promotionAvailable = true;
+          this.promotionSquare = new int[] {
+            endSquare[0],
+            endSquare[1]
+          };
+        }
+        
+        
         this.halfmoveClock = 0;
         break;
       case 'k':
@@ -931,6 +959,11 @@ class Board {
   }
   
   public boolean anyMoves() {
+    //if a promotion is available, the promotion needs to be played first
+    if (this.promotionAvailable) {
+      return true;
+    }
+    
     //checkmate/stalemate
     for (int i=0;i<this.width;i++) {
       for (int j=0;j<this.height;j++) {
@@ -954,6 +987,7 @@ class Board {
     int colourBoundWhite = 0;
     int colourBoundBlack = 0;
     int otherPieces = 0;
+    int barriers = 0;
     for (int i=0;i<this.width;i++) {
       for (int j=0;j<this.height;j++) {
         Piece piece = this.boardstate[j][i];
@@ -984,8 +1018,10 @@ class Board {
                 colourBoundBlack++;
               }
               break;
+            case 'o':
+              barriers++;
             case 'k':
-              //king is ignored
+              //ignored as irrelevant
               break;
             default:
               //assume any other piece can mate alone
@@ -999,15 +1035,15 @@ class Board {
     }
     else if (otherPieces==1) {
       //detect if a colour bound piece exists to mate with
-      return (colourBoundWhite > 0) || (colourBoundBlack > 0);
+      return (colourBoundWhite > 0) || (colourBoundBlack > 0) || (barriers > 0);
     }
     else {
       //detect if colurbound pieces exist on both colours
-      return (colourBoundWhite > 0) && (colourBoundBlack > 0);
+      int attacks = 0;
+      attacks += (colourBoundWhite > 0) ? 1 : 0;
+      attacks += (colourBoundBlack > 0) ? 1 : 0;
+      attacks += (barriers > 0) ? 1 : 0;
+      return  attacks >= 2;
     }
-  }
-
-  public void promotePiece(int[] square,char piece) {
-    this.boardstate[square[0]][square[1]].letter = piece;
   }
 }

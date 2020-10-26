@@ -28,6 +28,11 @@ public class ChessStart {
   private static JSpinner pawnSquares;
   private static JSpinner leftRook;
   private static JSpinner rightRook;
+  private static JTextField promotionOptions;
+  
+  //menu
+  private static JPanel menu;
+  private static JComboBox promotionChoices;
   
   //squares
   private static Square[][] boardSquares;
@@ -61,7 +66,8 @@ public class ChessStart {
       "Capablanca (10x8)",
       "Capablanca (10x10)",
       "12x12",
-      "Cavalry charge"
+      "Cavalry charge",
+      "Loaded Board"
     };
     presets = new JComboBox(presetNames);
     presets.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -121,6 +127,8 @@ public class ChessStart {
     //right rook column
     rightRook = ChessStart.createRow("Right Rook column:",8,1,2);
     
+    promotionOptions = ChessStart.createInput("Promotion Pieces:");
+    
     //add cards to CardLayout
     cards.add(pane);
     
@@ -135,14 +143,17 @@ public class ChessStart {
 
   public static void startGame() {
     //get game info
-    String gameFen = (String) fen.getText();
+    String gameFen = fen.getText();
     int pawnStartRow = (Integer) pawnRow.getValue();
     int pawnSquaresMovable = (Integer) pawnSquares.getValue();
     int leftRookColumn = (Integer) leftRook.getValue();
     int rightRookColumn = (Integer) rightRook.getValue();
+    String promotionPieces = promotionOptions.getText();
 
     gameState = new Game(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
-        rightRookColumn);
+        rightRookColumn,promotionPieces);
+    
+    ChessStart.getMenu();
     
     ChessStart.renderBoard();
   }
@@ -158,12 +169,7 @@ public class ChessStart {
   
   public static JSpinner createRow(String text,int defaultValue,int minimumValue,
       int columns) {
-    JPanel row = new JPanel();
-    row.setLayout(new BoxLayout(row,BoxLayout.X_AXIS));
-    row.setAlignmentX(Component.LEFT_ALIGNMENT);
-    
-    JLabel label = new JLabel(text);
-    row.add(label);
+    JPanel row = ChessStart.getBoxWithLabel(text);
     
     SpinnerNumberModel validNumbers = new SpinnerNumberModel(defaultValue,minimumValue,
         Integer.MAX_VALUE,1);
@@ -180,6 +186,30 @@ public class ChessStart {
     ChessStart.pane.add(row);
     
     return spinner;
+  }
+  
+  public static JTextField createInput(String text) {
+    JPanel row = ChessStart.getBoxWithLabel(text);
+    
+    JTextField input = new JTextField();
+    input.setAlignmentX(Component.LEFT_ALIGNMENT);
+    
+    row.add(input);
+    
+    ChessStart.pane.add(row);
+    
+    return input;
+  }
+  
+  public static JPanel getBoxWithLabel(String text) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel,BoxLayout.X_AXIS));
+    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    
+    JLabel label = new JLabel(text);
+    panel.add(label);
+    
+    return panel;
   }
   
   public static void move(int[] square) {
@@ -206,27 +236,13 @@ public class ChessStart {
       boardSquares[square[0]][square[1]].select(lastMoveColour);
       boardSquares[selectedColumn][selectedRow].select(lastMoveColour);
       
-      //colour the king if in check
-      if (gameState.position.inCheck) {
-        int[] kingLocation;
-        if (gameState.position.toMove) {
-          //white is in check
-          kingLocation = gameState.position.whiteKingLocation;
-        }
-        else {
-          //black is in check
-          kingLocation = gameState.position.blackKingLocation;
-        }
-        Color checkColour = new Color(192,0,0);
-        boardSquares[kingLocation[0]][kingLocation[1]].select(checkColour);
-      }
-      
       //remove the last board state to prevent using up lots of memory
       cards.remove(1);
     }
     else {
       boardSquares[selectedSquare[0]][selectedSquare[1]].deSelect();
       selectedSquare = new int[] {-1,-1};
+      ChessStart.testCheck();
     }
     
   }
@@ -271,6 +287,8 @@ public class ChessStart {
       }
     }
     
+    ChessStart.testCheck();
+    
     //initialise selected square
     selectedSquare = new int[] {-1,-1};
     
@@ -282,30 +300,6 @@ public class ChessStart {
     JPanel gameLayout = new JPanel(new GridBagLayout());
     gameLayout.add(gameBoard,new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,
         GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0));
-    
-    //add menu side bar
-    JPanel menu = new JPanel();
-    menu.setLayout(new BoxLayout(menu,BoxLayout.Y_AXIS));
-    
-    JButton newGame = new JButton("New Game");
-    newGame.setAlignmentX(Component.LEFT_ALIGNMENT);
-    newGame.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ChessStart.newGame();
-      }
-    });
-    menu.add(newGame);
-    
-    JButton copyFen = new JButton("Copy FEN to clipboard");
-    copyFen.setAlignmentX(Component.LEFT_ALIGNMENT);
-    copyFen.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ChessStart.copyFen();
-      }
-    });
-    menu.add(copyFen);
     
     gameLayout.add(menu);
     
@@ -341,6 +335,52 @@ public class ChessStart {
     }
   }
   
+  public static void getMenu() {
+    //add menu side bar
+    menu = new JPanel();
+    menu.setLayout(new BoxLayout(menu,BoxLayout.Y_AXIS));
+    
+    JButton newGame = new JButton("New Game");
+    newGame.setAlignmentX(Component.LEFT_ALIGNMENT);
+    newGame.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.newGame();
+      }
+    });
+    menu.add(newGame);
+    
+    JButton copyFen = new JButton("Copy FEN to clipboard");
+    copyFen.setAlignmentX(Component.LEFT_ALIGNMENT);
+    copyFen.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.copyFen();
+      }
+    });
+    menu.add(copyFen);
+    
+    String promotionPieces = gameState.promotionOptions;
+    int length = promotionPieces.length();
+    String[] promotions = new String[length];
+    for (int i=0;i<length;i++) {
+      promotions[i] = promotionPieces.substring(i,i+1);
+    }
+    promotionChoices = new JComboBox(promotions);
+    promotionChoices.setAlignmentX(Component.LEFT_ALIGNMENT);
+    menu.add(promotionChoices);
+    
+    JButton promote = new JButton("Promote");
+    promote.setAlignmentX(Component.LEFT_ALIGNMENT);
+    promote.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ChessStart.promote();
+      }
+    });
+    menu.add(promote);
+  }
+  
   public static void newGame() {
     window.setTitle("Choose game FEN");
     CardLayout cardLayout = (CardLayout) cards.getLayout();
@@ -357,6 +397,7 @@ public class ChessStart {
         pawnSquares.setValue(2);
         leftRook.setValue(1);
         rightRook.setValue(8);
+        promotionOptions.setText("qrbn");
         break;
       case "Mini chess":
         //miniature board
@@ -364,39 +405,53 @@ public class ChessStart {
         pawnRow.setValue(2);
         pawnSquares.setValue(1);
         leftRook.setValue(1);
-        rightRook.setValue(6);
+        rightRook.setValue(5);
+        promotionOptions.setText("qrbn");
         break;
       case "Capablanca (10x8)":
-        //standard chess
+        //Capablanca's chess on a 10x8 board without triple move
         fen.setText("rnabqkbcnr/pppppppppp/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1");
         pawnRow.setValue(2);
         pawnSquares.setValue(2);
         leftRook.setValue(1);
         rightRook.setValue(10);
+        promotionOptions.setText("qcarbn");
         break;
       case "Capablanca (10x10)":
-        //standard chess
+        //Capablanca's chess on a 10x0 with triple move
         fen.setText("rnabqkbcnr/pppppppppp/10/10/10/10/10/10/PPPPPPPPPP/RNABQKBCNR w KQkq - 0 1");
         pawnRow.setValue(2);
         pawnSquares.setValue(3);
         leftRook.setValue(1);
         rightRook.setValue(10);
+        promotionOptions.setText("qcarbn");
         break;
       case "12x12":
-        //standard chess
+        //12x12 chess
         fen.setText("rhbicmkqabhr/lnlzxnnxzlnl/pppppppppppp/12/12/12/12/12/12/PPPPPPPPPPPP/LNLZXNNXZLNL/RHBICMKQABHR w KQkq - 0 1");
         pawnRow.setValue(3);
         pawnSquares.setValue(3);
         leftRook.setValue(1);
         rightRook.setValue(12);
+        promotionOptions.setText("mqcahirbzxnl");
         break;
       case "Cavalry charge":
-        //standard chess
+        //interesting custom position
         fen.setText("nnnnknnn/pppppppp/8/8/8/8/PPPPPPPP/NNNNKNNN w - - 0 1");
         pawnRow.setValue(2);
         pawnSquares.setValue(2);
         leftRook.setValue(1);
         rightRook.setValue(8);
+        promotionOptions.setText("iznl");
+        break;
+      case "Loaded Board":
+        //interesting custom position
+        fen.setText("rrrqkrrr/bbbbbbbb/nnnnnnnn/pppppppp/PPPPPPPP/NNNNNNNN/BBBBBBBB/RRRQKRRR w KQkq - 0 1");
+        pawnRow.setValue(2);
+        pawnSquares.setValue(2);
+        leftRook.setValue(1);
+        rightRook.setValue(8);
+        promotionOptions.setText("qrbn");
         break;
     }
   }
@@ -405,5 +460,29 @@ public class ChessStart {
     String currentFen = ChessStart.gameState.position.toFen();
     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
     clipboard.setContents(new StringSelection(currentFen),null);
+  }
+  
+  public static void promote() {
+    char piece = ((String) ChessStart.promotionChoices.getSelectedItem()).charAt(0);
+    if (ChessStart.gameState.promotePiece(piece)) {
+      ChessStart.renderBoard();
+    }
+  }
+  
+  public static void testCheck() {
+    //colour the king if in check
+    if (gameState.position.inCheck) {
+      int[] kingLocation;
+      if (gameState.position.toMove) {
+        //white is in check
+        kingLocation = gameState.position.whiteKingLocation;
+      }
+      else {
+        //black is in check
+        kingLocation = gameState.position.blackKingLocation;
+      }
+      Color checkColour = new Color(192,0,0);
+      boardSquares[kingLocation[0]][kingLocation[1]].select(checkColour);
+    }
   }
 }

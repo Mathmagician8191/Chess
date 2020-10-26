@@ -18,19 +18,24 @@ public class Game {
   int gameResult; //-1=black win, 0=draw, 1=white win
   String endCause;
   
+  //promotion options
+  String promotionOptions;
+  
   public Game(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
-      int kingRookColumn) {
+      int kingRookColumn, String promotionOptions) {
     this.position = new Board(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn);
     this.checkResult();
     this.pastPositions = new ArrayList<>();
     this.pastPositions.add(new Board(this.position));
     this.duplicatedPositions = new ArrayList<>();
+    this.promotionOptions = promotionOptions;
   }
   
   public Game(Game original) {
     this.position = new Board(original.position);
     this.gameResult = original.gameResult;
     this.endCause = original.endCause;
+    this.promotionOptions = original.promotionOptions;
     
     //deep copy ArayLists
     this.pastPositions = new ArrayList<>();
@@ -118,6 +123,26 @@ public class Game {
       this.endCause = "Draw by insufficient material";
     }
     
+    return false;
+  }
+  
+  public boolean promotePiece(char piece) {
+    Board board = this.position;
+    if (board.promotionAvailable && (this.promotionOptions.indexOf(piece) != -1)) {
+      int[] square = board.promotionSquare;
+      board.boardstate[square[0]][square[1]].letter = piece;
+      board.promotionAvailable = false;
+      board.promotionSquare = new int[] {-1,-1};
+      
+      //check the new position for check/checkmate
+      board.detectCheck();
+      this.checkResult();
+      
+      //add the current position to the past positions
+      this.pastPositions.add(new Board(board));
+      
+      return true;
+    }
     return false;
   }
 }

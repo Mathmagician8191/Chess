@@ -24,6 +24,7 @@ public class Square extends JButton implements ActionListener {
   static Image blackCamel = Square.createImage("/images/BlackCamel.png");
   static Image blackAmazon = Square.createImage("/images/BlackAmazon.png");
   static Image blackMann = Square.createImage("/images/BlackMann.png");
+  static Image blackObstacle = Square.createImage("/images/BlackObstacle.png");
   static Image whitePawn = Square.createImage("/images/WhitePawn.png");
   static Image whiteKnight = Square.createImage("/images/WhiteKnight.png");
   static Image whiteBishop = Square.createImage("/images/WhiteBishop.png");
@@ -38,6 +39,7 @@ public class Square extends JButton implements ActionListener {
   static Image whiteCamel = Square.createImage("/images/WhiteCamel.png");
   static Image whiteAmazon = Square.createImage("/images/WhiteAmazon.png");
   static Image whiteMann = Square.createImage("/images/WhiteMann.png");
+  static Image whiteObstacle = Square.createImage("/images/WhiteObstacle.png");
   
   int[] coordinates;
   char letter;
@@ -80,6 +82,7 @@ public class Square extends JButton implements ActionListener {
       case 'l':
       case 'm':
       case 'x':
+      case 'o':
         this.setText("");
         break;
     }
@@ -142,6 +145,9 @@ public class Square extends JButton implements ActionListener {
       case 'x':
         image = blackMann;
         break;
+      case 'o':
+        image = blackObstacle;
+        break;
       case 'P':
         image = whitePawn;
         break;
@@ -183,6 +189,9 @@ public class Square extends JButton implements ActionListener {
         break;
       case 'X':
         image = whiteMann;
+        break;
+      case 'O':
+        image = whiteObstacle;
         break;
       default:
         image=null;
