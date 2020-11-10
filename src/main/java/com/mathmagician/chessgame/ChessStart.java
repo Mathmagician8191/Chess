@@ -29,6 +29,10 @@ public class ChessStart {
   private static JSpinner leftRook;
   private static JSpinner rightRook;
   private static JTextField promotionOptions;
+  private static JCheckBox aiEnabled;
+  private static JCheckBox aiWhite;
+  private static JSpinner depth;
+  private static JSpinner quiescenceDepth;
   
   //menu
   private static JPanel menu;
@@ -38,13 +42,19 @@ public class ChessStart {
   private static Square[][] boardSquares;
   
   //the state of the board
-  private static Game gameState;
+  private static Engine gameState;
+  
+  //state to undo to
+  private static Engine undoState;
   
   //selected square
   private static int[] selectedSquare;
+  
+  //engine settings
+  private static boolean enginePlays;
 
   public static void main(String[] args) {
-      makeGui();
+    makeGui();
   }
   public static void makeGui() {
     window = new JFrame("Choose game FEN");
@@ -129,6 +139,15 @@ public class ChessStart {
     
     promotionOptions = ChessStart.createInput("Promotion Pieces:");
     
+    aiEnabled = ChessStart.checkBox("AI");
+    
+    aiWhite = ChessStart.checkBox("AI is white");
+    
+    depth = ChessStart.createRow("Depth (higher is better but slower)",3,1,2);
+    
+    quiescenceDepth = ChessStart.createRow(
+        "Extra depth (can make very slow sometimes, too low makes AI bad)",3,1,1);
+    
     //add cards to CardLayout
     cards.add(pane);
     
@@ -139,32 +158,6 @@ public class ChessStart {
     window.add(cards);
     window.pack();
     window.setVisible(true);
-  }
-
-  public static void startGame() {
-    //get game info
-    String gameFen = fen.getText();
-    int pawnStartRow = (Integer) pawnRow.getValue();
-    int pawnSquaresMovable = (Integer) pawnSquares.getValue();
-    int leftRookColumn = (Integer) leftRook.getValue();
-    int rightRookColumn = (Integer) rightRook.getValue();
-    String promotionPieces = promotionOptions.getText();
-
-    gameState = new Game(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
-        rightRookColumn,promotionPieces);
-    
-    ChessStart.getMenu();
-    
-    ChessStart.renderBoard();
-  }
-  
-  public static void changeTitle() {
-    if (gameState.position.gameOver) {
-      window.setTitle("Game Over. " + gameState.endCause);
-    }
-    else {
-      window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");
-    }
   }
   
   public static JSpinner createRow(String text,int defaultValue,int minimumValue,
@@ -183,7 +176,7 @@ public class ChessStart {
     
     row.add(spinner);
     
-    ChessStart.pane.add(row);
+    pane.add(row);
     
     return spinner;
   }
@@ -193,12 +186,26 @@ public class ChessStart {
     
     JTextField input = new JTextField();
     input.setAlignmentX(Component.LEFT_ALIGNMENT);
+    input.setMaximumSize(new Dimension(Integer.MAX_VALUE, input.getPreferredSize().height));
     
     row.add(input);
     
-    ChessStart.pane.add(row);
+    pane.add(row);
     
     return input;
+  }
+  
+  private static JCheckBox checkBox(String text) {
+    JPanel row = ChessStart.getBoxWithLabel(text);
+    
+    JCheckBox checkBox = new JCheckBox();
+    checkBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+    
+    row.add(checkBox);
+    
+    pane.add(row);
+    
+    return checkBox;
   }
   
   public static JPanel getBoxWithLabel(String text) {
@@ -211,8 +218,72 @@ public class ChessStart {
     
     return panel;
   }
+
+  public static void startGame() {
+    //get game info
+    String gameFen = fen.getText();
+    int pawnStartRow = (Integer) pawnRow.getValue();
+    int pawnSquaresMovable = (Integer) pawnSquares.getValue();
+    int leftRookColumn = (Integer) leftRook.getValue();
+    int rightRookColumn = (Integer) rightRook.getValue();
+    String promotionPieces = promotionOptions.getText();
+    boolean aiPlaysWhite = aiWhite.isSelected();
+    int aiDepth = (Integer) depth.getValue();
+    int quietDepth  = (Integer) quiescenceDepth.getValue();
+    
+    enginePlays = aiEnabled.isSelected();
+
+    gameState = new Engine(gameFen,pawnStartRow,pawnSquaresMovable,leftRookColumn,
+        rightRookColumn,promotionPieces,aiDepth,quietDepth,aiPlaysWhite);
+    
+    ChessStart.getMenu();
+    
+    ChessStart.renderBoard();
+    
+    ChessStart.engineMove();
+    
+    //resize window if not maximized
+    if (window.getExtendedState() == JFrame.NORMAL) {
+      int defaultSize = 72;
+      Board position = gameState.position;
+      
+      Insets border = window.getInsets();
+      int width = (defaultSize*position.width) + border.left + border.right +
+          menu.getPreferredSize().width;
+      int height = (defaultSize*position.height) + border.top + border.bottom;
+      
+      //get current window size
+      int currentWidth = window.getWidth();
+      int currentHeight = window.getHeight();
+      
+      Rectangle currentScreen = window.getGraphicsConfiguration().getBounds();
+      int screenWidth = currentScreen.width;
+      int screenHeight = currentScreen.height;
+      width = Math.min(width,screenWidth);
+      height = Math.min(height, screenHeight);
+      
+      //update width/height to set
+      width = Math.max(width,currentWidth);
+      height = Math.max(height,currentHeight);
+      window.setSize(width,height);
+    }
+    
+    undoState = new Engine(gameState);
+  }
+  
+  public static void changeTitle() {
+    if (gameState.position.gameOver) {
+      window.setTitle("Game Over. " + gameState.endCause);
+    }
+    else {
+      window.setTitle(ChessStart.gameState.position.toMove ? "White to move" : "Black to Move");
+    }
+  }
   
   public static void move(int[] square) {
+    if (enginePlays && (gameState.side == gameState.position.toMove)) {
+      return;
+    }
     if (Arrays.equals(selectedSquare, new int[] {-1,-1})) {
       Board position = gameState.position;
       if (position.boardstate[square[0]][square[1]].side==(position.toMove ? 1 : -1)) {
@@ -223,6 +294,9 @@ public class ChessStart {
       }
     }
     else if (gameState.position.isMoveValid(selectedSquare, square)) {
+      //save game state to undo to
+      undoState = new Engine(gameState);
+      
       gameState.makeMove(selectedSquare, square);
       
       //save square moved from for later
@@ -231,20 +305,34 @@ public class ChessStart {
       
       ChessStart.renderBoard();
       
+      //remove the last board state to prevent using up lots of memory
+      cards.remove(1);
+      
+      ChessStart.engineMove();
+      
       //colour the squares moved from and to
       Color lastMoveColour = new Color(64,192,0);
       boardSquares[square[0]][square[1]].select(lastMoveColour);
       boardSquares[selectedColumn][selectedRow].select(lastMoveColour);
-      
-      //remove the last board state to prevent using up lots of memory
-      cards.remove(1);
     }
     else {
       boardSquares[selectedSquare[0]][selectedSquare[1]].deSelect();
       selectedSquare = new int[] {-1,-1};
       ChessStart.testCheck();
     }
-    
+  }
+  
+  public static void engineMove() {
+    //moves if it is the engine's turn
+    if (enginePlays && (gameState.side == gameState.position.toMove)
+        && !gameState.position.gameOver) {
+      window.setTitle("Thinking");
+      gameState = Engine.makeMove(gameState);
+      ChessStart.changeTitle();
+      ChessStart.renderBoard();
+      //remove the last board state to prevent using up lots of memory
+      cards.remove(1);
+    }
   }
   
   public static void renderBoard() {
@@ -263,8 +351,7 @@ public class ChessStart {
         int availableHeight = parent.getHeight();
         int maxSquareWidth = availableWidth/columnCount;
         int maxSquareHeight = availableHeight/rowCount;
-        int maxSquareSize = maxSquareWidth>maxSquareHeight ? maxSquareHeight :
-            maxSquareWidth;
+        int maxSquareSize = Math.min(maxSquareWidth,maxSquareHeight);
         return new Dimension(maxSquareSize*columnCount,maxSquareSize*rowCount);
       }
     };
@@ -307,32 +394,6 @@ public class ChessStart {
     cards.add(gameLayout);
     CardLayout cardLayout = (CardLayout) cards.getLayout();
     cardLayout.next(cards);
-    
-    //resize window if not maximized
-    if (window.getExtendedState() == JFrame.NORMAL) {
-      int defaultSize = 72;
-      Board position = gameState.position;
-      
-      Insets border = window.getInsets();
-      int width = (defaultSize*position.width) + border.left + border.right +
-          menu.getPreferredSize().width;
-      int height = (defaultSize*position.height) + border.top + border.bottom;
-      
-      //get current window size
-      int currentWidth = window.getWidth();
-      int currentHeight = window.getHeight();
-      
-      Rectangle currentScreen = window.getGraphicsConfiguration().getBounds();
-      int screenWidth = currentScreen.width;
-      int screenHeight = currentScreen.height;
-      width = Math.min(width,screenWidth);
-      height = Math.min(height, screenHeight);
-      
-      //update width/height to set
-      width = Math.max(width,currentWidth);
-      height = Math.max(height,currentHeight);
-      window.setSize(width,height);
-    }
   }
   
   public static void getMenu() {
@@ -360,25 +421,37 @@ public class ChessStart {
     });
     menu.add(copyFen);
     
-    String promotionPieces = gameState.promotionOptions;
-    int length = promotionPieces.length();
-    String[] promotions = new String[length];
-    for (int i=0;i<length;i++) {
-      promotions[i] = promotionPieces.substring(i,i+1);
+    if (ChessStart.gameState.promotionOptions.length()>1) {
+      String promotionPieces = ChessStart.gameState.promotionOptions;
+      int length = promotionPieces.length();
+      String[] promotions = new String[length];
+      for (int i=0;i<length;i++) {
+        promotions[i] = promotionPieces.substring(i,i+1);
+      }
+      promotionChoices = new JComboBox(promotions);
+      promotionChoices.setAlignmentX(Component.LEFT_ALIGNMENT);
+      menu.add(promotionChoices);
+
+      JButton promote = new JButton("Promote");
+      promote.setAlignmentX(Component.LEFT_ALIGNMENT);
+      promote.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ChessStart.promote();
+        }
+      });
+      menu.add(promote);
     }
-    promotionChoices = new JComboBox(promotions);
-    promotionChoices.setAlignmentX(Component.LEFT_ALIGNMENT);
-    menu.add(promotionChoices);
     
-    JButton promote = new JButton("Promote");
-    promote.setAlignmentX(Component.LEFT_ALIGNMENT);
-    promote.addActionListener(new ActionListener() {
+    JButton undo = new JButton("Undo last move");
+    undo.setAlignmentX(Component.LEFT_ALIGNMENT);
+    undo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ChessStart.promote();
+        ChessStart.undo();
       }
     });
-    menu.add(promote);
+    menu.add(undo);
   }
   
   public static void newGame() {
@@ -463,10 +536,19 @@ public class ChessStart {
   }
   
   public static void promote() {
-    char piece = ((String) ChessStart.promotionChoices.getSelectedItem()).charAt(0);
-    if (ChessStart.gameState.promotePiece(piece)) {
+    char piece = ((String) promotionChoices.getSelectedItem()).charAt(0);
+    if (gameState.promotePiece(piece)) {
       ChessStart.renderBoard();
+      ChessStart.engineMove();
     }
+  }
+  
+  public static void undo() {
+    gameState = undoState;
+    ChessStart.renderBoard();
+    
+    //remove the last board state to prevent using up lots of memory
+    cards.remove(1);
   }
   
   public static void testCheck() {

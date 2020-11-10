@@ -44,6 +44,7 @@ public class Square extends JButton implements ActionListener {
   int[] coordinates;
   char letter;
   Color colour;
+  Image image;
   
   public Square(int[] coordinates, char letter) {
     super(String.valueOf(letter));
@@ -66,25 +67,129 @@ public class Square extends JButton implements ActionListener {
     this.setMargin(new Insets(0,0,0,0));
     this.setBorderPainted(false);
     
-    //set the icon of the square
-    switch (Character.toLowerCase(letter)) {
+    switch (this.letter) {
       case 'p':
-      case 'n':
-      case 'b':
-      case 'r':
-      case 'q':
-      case 'k':
-      case 'a':
-      case 'c':
-      case 'i':
-      case 'z':
-      case 'h':
-      case 'l':
-      case 'm':
-      case 'x':
-      case 'o':
+        image = blackPawn;
         this.setText("");
         break;
+      case 'n':
+        image = blackKnight;
+        this.setText("");
+        break;
+      case 'b':
+        image = blackBishop;
+        this.setText("");
+        break;
+      case 'r':
+        image = blackRook;
+        this.setText("");
+        break;
+      case 'q':
+        image = blackQueen;
+        this.setText("");
+        break;
+      case 'k':
+        image = blackKing;
+        this.setText("");
+        break;
+      case 'a':
+        image = blackArchbishop;
+        this.setText("");
+        break;
+      case 'c':
+        image = blackChancellor;
+        this.setText("");
+        break;
+      case 'i':
+        image = blackNightrider;
+        this.setText("");
+        break;
+      case 'z':
+        image = blackZebra;
+        this.setText("");
+        break;
+      case 'h':
+        image = blackChampion;
+        this.setText("");
+        break;
+      case 'l':
+        image = blackCamel;
+        this.setText("");
+        break;
+      case 'm':
+        image = blackAmazon;
+        this.setText("");
+        break;
+      case 'x':
+        image = blackMann;
+        this.setText("");
+        break;
+      case 'o':
+        image = blackObstacle;
+        this.setText("");
+        break;
+      case 'P':
+        image = whitePawn;
+        this.setText("");
+        break;
+      case 'N':
+        image = whiteKnight;
+        this.setText("");
+        break;
+      case 'B':
+        image = whiteBishop;
+        this.setText("");
+        break;
+      case 'R':
+        image = whiteRook;
+        this.setText("");
+        break;
+      case 'Q':
+        image = whiteQueen;
+        this.setText("");
+        break;
+      case 'K':
+        image = whiteKing;
+        this.setText("");
+        break;
+      case 'A':
+        image = whiteArchbishop;
+        this.setText("");
+        break;
+      case 'C':
+        image = whiteChancellor;
+        this.setText("");
+        break;
+      case 'I':
+        image = whiteNightrider;
+        this.setText("");
+        break;
+      case 'Z':
+        image = whiteZebra;
+        this.setText("");
+        break;
+      case 'H':
+        image = whiteChampion;
+        this.setText("");
+        break;
+      case 'L':
+        image = whiteCamel;
+        this.setText("");
+        break;
+      case 'M':
+        image = whiteAmazon;
+        this.setText("");
+        break;
+      case 'X':
+        image = whiteMann;
+        this.setText("");
+        break;
+      case 'O':
+        image = whiteObstacle;
+        this.setText("");
+        break;
+      default:
+        image=null;
     }
   }
   
@@ -100,104 +205,7 @@ public class Square extends JButton implements ActionListener {
     Graphics2D twoDGraphics = (Graphics2D) graphics;
     super.paintComponent(graphics);
     
-    Image image;
-    
-    switch (this.letter) {
-      case 'p':
-        image = blackPawn;
-        break;
-      case 'n':
-        image = blackKnight;
-        break;
-      case 'b':
-        image = blackBishop;
-        break;
-      case 'r':
-        image = blackRook;
-        break;
-      case 'q':
-        image = blackQueen;
-        break;
-      case 'k':
-        image = blackKing;
-        break;
-      case 'a':
-        image = blackArchbishop;
-        break;
-      case 'c':
-        image = blackChancellor;
-        break;
-      case 'i':
-        image = blackNightrider;
-        break;
-      case 'z':
-        image = blackZebra;
-        break;
-      case 'h':
-        image = blackChampion;
-        break;
-      case 'l':
-        image = blackCamel;
-        break;
-      case 'm':
-        image = blackAmazon;
-        break;
-      case 'x':
-        image = blackMann;
-        break;
-      case 'o':
-        image = blackObstacle;
-        break;
-      case 'P':
-        image = whitePawn;
-        break;
-      case 'N':
-        image = whiteKnight;
-        break;
-      case 'B':
-        image = whiteBishop;
-        break;
-      case 'R':
-        image = whiteRook;
-        break;
-      case 'Q':
-        image = whiteQueen;
-        break;
-      case 'K':
-        image = whiteKing;
-        break;
-      case 'A':
-        image = whiteArchbishop;
-        break;
-      case 'C':
-        image = whiteChancellor;
-        break;
-      case 'I':
-        image = whiteNightrider;
-        break;
-      case 'Z':
-        image = whiteZebra;
-        break;
-      case 'H':
-        image = whiteChampion;
-        break;
-      case 'L':
-        image = whiteCamel;
-        break;
-      case 'M':
-        image = whiteAmazon;
-        break;
-      case 'X':
-        image = whiteMann;
-        break;
-      case 'O':
-        image = whiteObstacle;
-        break;
-      default:
-        image=null;
-    }
-    
-    twoDGraphics.drawImage(image,0,0,this.getWidth(),this.getHeight(),this);
+    twoDGraphics.drawImage(this.image,0,0,this.getWidth(),this.getHeight(),this);
   }
   
   public static Image createImage(String location) {

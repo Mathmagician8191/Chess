@@ -60,6 +60,10 @@ public class Game {
     this.checkResult();
    
     this.pastPositions.add(new Board(this.position));
+    
+    if (this.position.promotionAvailable && (this.promotionOptions.length() == 1)) {
+      this.promotePiece(this.promotionOptions.charAt(0));
+    }
   }
   
   public boolean checkResult() {

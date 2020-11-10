@@ -437,11 +437,7 @@ class Board {
               }
             }
           }
-          if (squaresMoved < 0) {
-            //pawns can't go backwards
-            return false;
-          }
-          return true;
+          return !(squaresMoved < 0);
         }
         //test for capture
         else {
@@ -915,14 +911,16 @@ class Board {
           }
         }
         break;
-      case 'r':
-        //check for white loss of castle due to rook move
-        if (startSquare[0]==kingRookColumn) {
-          this.castleRights[toMove?0:2] = false;
-        }
-        else if (startSquare[0]==queenRookColumn) {
-          this.castleRights[toMove?1:3] = false;
-        }
+    }
+    //check for white loss of castle due to castle piece move
+    int kingRow = toMove ? blackKingLocation[1] : whiteKingLocation[1];
+    if (startSquare[1]==kingRow) {
+      if (startSquare[0]==kingRookColumn) {
+        this.castleRights[toMove?2:0] = false;
+      }
+      else if (startSquare[0]==queenRookColumn) {
+        this.castleRights[toMove?3:1] = false;
+      }
     }
     //reset halfmoveClock in case of capture
     if (this.boardstate[endSquare[0]][endSquare[1]].isPiece) {
